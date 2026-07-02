@@ -1,0 +1,10 @@
+{
+  "//": "Deno config for the send-digest Edge Function. Zero external npm deps beyond the Supabase client (pulled from JSR at runtime). The Resend call is a raw fetch (see resend.ts), so the function stays dependency-light and keyless-safe.",
+  "imports": {
+    "@supabase/supabase-js": "jsr:@supabase/supabase-js@2"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom"],
+    "strict": true
+  }
+}

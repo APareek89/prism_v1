@@ -1,0 +1,20 @@
+{
+  "name": "@prism/ingest",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Prism v3 ingestion domain (backend teammate). Today: v3 schema migrations + deterministic dummy seed + the ingestion spec (README.md). Later: real connectors writing the same raw tables.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "node --check scripts/migrate.mjs && node --check scripts/seed.mjs && node --check scripts/reset.mjs",
+    "migrate": "node --env-file=../../.env.local scripts/migrate.mjs",
+    "seed": "node --env-file=../../.env.local scripts/seed.mjs",
+    "reset": "node --env-file=../../.env.local scripts/reset.mjs"
+  },
+  "dependencies": {
+    "@prism/contract": "*",
+    "pg": "^8.22.0"
+  }
+}

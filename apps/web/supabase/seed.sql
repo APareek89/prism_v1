@@ -1,0 +1,23 @@
+-- ─────────────────────────────────────────────────────────────────────────────
+-- supabase/seed.sql — CONFIG-ONLY SEED ENTRYPOINT
+-- ─────────────────────────────────────────────────────────────────────────────
+-- NO-DUMMY-DATA INVARIANT (architecture §0.4 / docs/architecture/ownership-map.md):
+--
+--   The ONLY seed in Prism is `index_config` v1 + its ONE bootstrap `functions`
+--   row. That seed lives in migration 0021_seed_index_config.sql, which has
+--   already run by the time this file executes during `supabase db reset`.
+--
+--   ⛔ DO NOT add synthetic EMPLOYEES, PRs, COMMITS, SESSIONS, SCORES, INSIGHTS,
+--      RECOMMENDATIONS, COURSES, or COMMS here — or anywhere else.
+--
+--   Real people, PRs, and scores only ever enter through the connectors and the
+--   daily pipeline. Empty/awaiting-signal states are the intended day-one UX.
+--   Test fixtures live exclusively under __tests__/__fixtures__ and are never
+--   imported by app, pipeline, or seed code.
+--
+-- This file intentionally adds nothing beyond the migration-owned config seed.
+-- It exists so `supabase db reset` has a declared seed entrypoint (config.toml
+-- → [db.seed].sql_paths) and so this guard comment is impossible to miss.
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- (No statements. The config seed is owned by migration 0021.)

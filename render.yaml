@@ -1,0 +1,40 @@
+# Render Blueprint (stub — wired post-MVP). Deploy target is Render, not Vercel.
+# Local development does not use this file; it documents the eventual prod shape.
+services:
+  - type: web
+    name: prism
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
+    healthCheckPath: /api/health
+    autoDeploy: false
+    envVars:
+      # Secrets are set in the Render dashboard (sync:false). Mirror .env.example.
+      - key: APP_ENV
+        value: production
+      - key: DEMO_MODE
+        value: "false"
+      - { key: NEXT_PUBLIC_SUPABASE_URL, sync: false }
+      - { key: NEXT_PUBLIC_SUPABASE_ANON_KEY, sync: false }
+      - { key: SUPABASE_SERVICE_ROLE_KEY, sync: false }
+      - { key: SUPABASE_DB_URL, sync: false }
+      - { key: ANTHROPIC_API_KEY, sync: false }
+      - { key: GITHUB_APP_ID, sync: false }
+      - { key: GITHUB_APP_PRIVATE_KEY, sync: false }
+      - { key: GITHUB_APP_WEBHOOK_SECRET, sync: false }
+      - { key: GITHUB_APP_CLIENT_ID, sync: false }
+      - { key: GITHUB_APP_CLIENT_SECRET, sync: false }
+      - { key: SENTRY_AUTH_TOKEN, sync: false }
+      - { key: RESEND_API_KEY, sync: false }
+      - { key: INNGEST_EVENT_KEY, sync: false }
+      - { key: INNGEST_SIGNING_KEY, sync: false }
+      - { key: LEARNING_STUDIO_BASE_URL, sync: false }
+
+# Optional daily pipeline trigger (alternative to Inngest Cloud). Uncomment post-MVP:
+# - type: cron
+#   name: prism-daily
+#   runtime: node
+#   schedule: "0 6 * * *"            # 06:00 daily
+#   buildCommand: npm ci && npm run build
+#   startCommand: node scripts/trigger-daily.js

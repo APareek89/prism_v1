@@ -1,0 +1,25 @@
+{
+  "name": "@prism/contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared TS types generated from the v3 schema. The ONLY package web/engine/ingest may all import. Regenerate with `npm run generate` after changing services/ingest/migrations.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "generate": "node --env-file=../../.env.local scripts/generate.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.7",
+    "pg": "^8.22.0",
+    "typescript": "^5.7.3"
+  }
+}

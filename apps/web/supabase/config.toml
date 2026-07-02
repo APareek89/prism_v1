@@ -1,0 +1,91 @@
+# Supabase CLI project configuration for Prism.
+# Lets `supabase start` / `supabase db reset` run the full local stack
+# (Postgres + Auth + Storage + Edge Functions) and apply migrations + seed.
+# Docs: https://supabase.com/docs/guides/cli/config
+
+project_id = "prism"
+
+[api]
+enabled = true
+port = 54321
+# Schemas exposed via the auto-generated REST/GraphQL API.
+schemas = ["public", "graphql_public"]
+# Schemas searched (in order) when resolving unqualified names from PostgREST.
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+# Must match the Postgres major version of the hosted project so migrations
+# behave identically locally and in prod. Prism targets Postgres 15.
+major_version = 15
+
+[db.pooler]
+enabled = false
+port = 54329
+pool_mode = "transaction"
+default_pool_size = 20
+max_client_conn = 100
+
+[db.migrations]
+# Numbered migrations under supabase/migrations are owned by the data layer
+# (0001-0021); automation appends net-new tables at 0030+.
+schema_paths = []
+
+[db.seed]
+# The ONLY seed is config (index_config v1 + bootstrap function). No dummy data.
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+api_url = "http://127.0.0.1"
+
+[inbucket]
+# Local SMTP capture so magic-link + digest emails are inspectable in dev.
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[auth]
+enabled = true
+# Local base URL the app + magic-link callbacks resolve against.
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["http://localhost:3000/auth/callback"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+refresh_token_reuse_interval = 10
+# Magic-link / OTP sign-in (no passwords); DEMO_MODE bypass is app-level.
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = true
+# Magic link is the production sign-in path (PRD §10.1 / §12.5).
+secure_password_change = false
+
+[edge_runtime]
+enabled = true
+# Restart per-request in dev so Edge Function edits are picked up immediately.
+policy = "oneshot"
+inspector_port = 8083
+
+# Future M4 digest sender. The Edge Function holds the ONLY Resend key.
+# The function dir (supabase/functions/send-digest) is created by the
+# pipeline subsystem (architecture §7); declared here so the runtime knows it.
+[functions.send-digest]
+enabled = true
+verify_jwt = false
+
+[analytics]
+enabled = false

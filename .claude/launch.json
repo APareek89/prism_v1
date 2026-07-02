@@ -1,0 +1,20 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prism-v3-web",
+      "runtimeExecutable": "/Users/anandpareek/.nvm/versions/node/v22.22.0/bin/node",
+      "runtimeArgs": [
+        "/Users/anandpareek/.nvm/versions/node/v22.22.0/lib/node_modules/npm/bin/npm-cli.js",
+        "run",
+        "dev",
+        "--workspace",
+        "apps/web",
+        "--",
+        "--port",
+        "3010"
+      ],
+      "port": 3010
+    }
+  ]
+}
