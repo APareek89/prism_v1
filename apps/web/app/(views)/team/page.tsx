@@ -1,76 +1,72 @@
 // app/(views)/team/page.tsx
 //
-// Team view — the faithful M1 port of the `#team` section of the approved design.
-// Per-section header (`.top` + PeriodToggle), the `.daterow` context pills, the squad
-// roster card (RosterTable, which maps N members and links each to /team/[id]), and
-// the coaching-not-leaderboard footnote.
-//
-// Server Component. The roster comes from the data layer (lib/db) and is member-count
-// agnostic — it renders cleanly empty (a "no engineers onboarded yet" row) until the
-// roster is populated, and lights up for 1 or N members.
+// Team view — the v1 page skeleton on the v3.0 model: per-engineer roster with
+// BOTH indexes (main + harness), sortable, drill-in per member.
 
-import { getCurrentFunctionId } from '@/lib/db/_base';
-import { getMeta } from '@/lib/db/index-read';
-import { getRoster } from '@/lib/db/roster';
-import { RosterTable } from '@/components/panels/RosterTable';
-import { PeriodToggle } from '@/components/layout/PeriodToggle';
-import { parsePeriod } from '@/lib/config/constants';
+import { activePin, teamRows } from '@/lib/v3/read';
+import { TeamTable, type TeamTableRow } from '@/components/v3/TeamTable';
 
-export default async function TeamView({
-  searchParams,
-}: {
-  searchParams: Promise<{ period?: string | string[] }>;
-}) {
-  const sp = await searchParams;
-  const period = parsePeriod(sp.period);
+export const dynamic = 'force-dynamic';
 
-  const functionId = await getCurrentFunctionId();
+export default async function TeamView() {
+  const pin = await activePin();
+  const rows = await teamRows(pin);
+  const vm: TeamTableRow[] = rows.map((r) => ({
+    id: r.dev.id,
+    handle: r.dev.handle,
+    name: r.dev.name,
+    archetype: r.dev.archetype,
+    team: r.dev.team,
+    mainScore: r.main?.score ?? null,
+    band: r.main?.band ?? null,
+    mainConfidence: r.main?.confidence ?? 0,
+    l0Forced: r.main?.gates.l0_forced ?? false,
+    l5Capped: r.main?.gates.l5_capped ?? false,
+    multiplier: r.main?.gates.multiplier_signal ?? 0,
+    dimensions: r.main?.dimensions ?? {},
+    harnessScore: r.harness?.score ?? null,
+    harnessConfidence: r.harness?.confidence ?? 0,
+    aiSharePct: r.aiSharePct,
+    insightCount: r.insightCount,
+    recCount: r.recCount,
+  }));
 
-  // No function resolved (keyless / no roster) → render the chrome with an empty
-  // roster (RosterTable shows the "no engineers onboarded yet" row). No fabrication.
-  const [meta, roster] = functionId
-    ? await Promise.all([getMeta('team', functionId, period), getRoster(functionId)])
-    : [null, []];
-
-  const confWidth = meta ? Math.max(0, Math.min(100, meta.confidencePct)) : 0;
+  const confs = vm.map((r) => r.mainConfidence).sort((a, b) => a - b);
+  const medianConf = confs.length ? confs[Math.floor(confs.length / 2)]! : 0;
+  const confLabel = medianConf >= 0.75 ? 'High' : medianConf >= 0.55 ? 'Medium' : medianConf >= 0.4 ? 'Low' : 'Insufficient';
 
   return (
     <div className="main">
       <div className="top">
         <div className="ttl">
           <h2>Team view</h2>
-          <p>Per-engineer breakdown · coaching signal, not a leaderboard</p>
+          <p>Per-engineer breakdown across BOTH indexes · coaching signal, not a leaderboard</p>
         </div>
-        <PeriodToggle />
       </div>
 
       <div className="daterow">
-        <span className="pill">
-          Squad <b>{meta?.scopeLabel ?? '—'}</b>
-        </span>
-        <span className="pill">
-          Engineers <b>{roster.length}</b>
-        </span>
+        <span className="pill">Window <b>trailing 28d</b></span>
+        <span className="pill">Engineers <b>{vm.length}</b></span>
+        <span className="pill">Config <b>v{pin.version}</b></span>
+        <span className="pill">As-of <b>{pin.date ?? '—'}</b></span>
         <span className="conf">
           confidence
-          <span className="bar">
-            <i style={{ width: `${confWidth}%` }} />
-          </span>
-          {meta?.confidence ?? 'Insufficient'}
+          <span className="bar"><i style={{ width: `${Math.round(medianConf * 100)}%` }} /></span>
+          {confLabel}
         </span>
       </div>
 
       <div className="card">
         <div className="cardhead">
-          <h3>Squad roster</h3>
-          <span className="sub">click &ldquo;drill in&rdquo; to open a member · ranked by AI-Native Index</span>
+          <h3>Squad roster — main + harness</h3>
+          <span className="sub">MAIN 15/35/50 over Core-6 · HARNESS separate (12–15) · click a header to sort · drill in for insights</span>
         </div>
-        <RosterTable members={roster} />
+        <TeamTable rows={vm} />
       </div>
 
       <div className="foot">
-        Individual scores carry wide confidence bands and exist for coaching only. The function
-        headline (L1) is the unit of accountability — never a per-engineer ranking.
+        Individual scores carry wide confidence bands and exist for coaching only. The harness
+        index never mixes into the main number — the linkage engine connects them with evidence.
       </div>
     </div>
   );

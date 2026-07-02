@@ -65,7 +65,14 @@ export function V3IndexHero({ main }: { main: IndexDailyRow | null }) {
 }
 
 /** Dimension spectrum + the separate harness row — SpectrumPanel's exact treatment. */
-export function V3Spectrum({ main, harness }: { main: IndexDailyRow | null; harness: IndexDailyRow | null }) {
+export interface SpectrumValues {
+  usage: number | null;
+  efficiency: number | null;
+  outcomes: number | null;
+  harness: number | null;
+}
+
+export function V3Spectrum({ values }: { values: SpectrumValues }) {
   const dims = [
     { key: 'usage' as const, label: 'Usage', hue: DIMENSION_HUES.usage, weight: 15 },
     { key: 'efficiency' as const, label: 'Efficiency', hue: DIMENSION_HUES.efficiency, weight: 35 },
@@ -74,7 +81,7 @@ export function V3Spectrum({ main, harness }: { main: IndexDailyRow | null; harn
   return (
     <div className="card spectrum">
       {dims.map((d) => {
-        const score = main?.dimensions?.[d.key] ?? null;
+        const score = values[d.key];
         const width = score === null ? 0 : Math.max(0, Math.min(100, score));
         return (
           <div className="subrow" key={d.key}>
@@ -101,9 +108,9 @@ export function V3Spectrum({ main, harness }: { main: IndexDailyRow | null; harn
           </div>
         </div>
         <div className="track">
-          <i style={{ width: `${Math.max(0, Math.min(100, harness?.score ?? 0))}%`, background: DIMENSION_HUES.proficiency }} />
+          <i style={{ width: `${Math.max(0, Math.min(100, values.harness ?? 0))}%`, background: DIMENSION_HUES.proficiency }} />
         </div>
-        <div className="subval"><b>{harness?.score === null || !harness ? '—' : harness.score.toFixed(1)}</b></div>
+        <div className="subval"><b>{values.harness === null ? '—' : values.harness.toFixed(1)}</b></div>
       </div>
     </div>
   );

@@ -44,7 +44,7 @@ export function MyView(p: Props) {
       <div className="top">
         <div className="ttl">
           <h2>My view</h2>
-          <p>Private to you · {p.dev.name} · {p.dev.archetype.replaceAll('_', ' ')} · v3.0 preview</p>
+          <p>Private to you · {p.dev.name} · {p.dev.archetype.replaceAll('_', ' ')} · v3.0 model</p>
         </div>
         <div className="seg" role="tablist" aria-label="My view tabs">
           {TABS.map((t) => (
@@ -68,7 +68,7 @@ export function MyView(p: Props) {
           demo switcher{' '}
           <select
             value={p.dev.handle}
-            onChange={(e) => router.push(`/v3/me?dev=${e.target.value}`)}
+            onChange={(e) => router.push(`/me?dev=${e.target.value}`)}
             aria-label="Switch developer (demo only)"
             style={{
               background: 'var(--panel2)', color: 'var(--ink)', border: '1px solid var(--line2)',
@@ -86,7 +86,7 @@ export function MyView(p: Props) {
         <>
           <div className="hero">
             <V3IndexHero main={p.main} />
-            <V3Spectrum main={p.main} harness={p.harness} />
+            <V3Spectrum values={{ usage: p.main?.dimensions?.usage ?? null, efficiency: p.main?.dimensions?.efficiency ?? null, outcomes: p.main?.dimensions?.outcomes ?? null, harness: p.harness?.score ?? null }} />
           </div>
           <InsightList
             insights={p.insights}

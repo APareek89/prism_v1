@@ -1,117 +1,65 @@
 // app/(views)/me/page.tsx
 //
-// My view — the private employee view. Resolves the current employee via getAuthUser()
-// and renders the faithful port of the design's `#employee` section:
-//   .top   — "My view · Private to you"
-//   .hero  — IndexHero + SpectrumPanel (showVsSquad)        [reused panels, not recreated]
-//   .row   — the assigned-course card (CourseCard)
-//   .row.r2 — Recent PR insights (PrInsightList) + Recommended for you (RecommendationList)
-//   .foot  — the privacy footnote
-//
-// All data is real, Supabase-backed via lib/db. Until index_daily has rows the DTOs are
-// empty/awaiting-signal shapes, so the index renders its EmptyState and the lists render
-// their compact EmptyStates — no fabricated numbers. The full faithful structure is here.
+// My view — the v1 skeleton on the v3.0 model:
+// .top header (tabs sit where the PeriodToggle sits on v1 views) → .daterow →
+// tab content (hero+insights / coaching / growth) → .foot privacy note.
 
-import { MetaStrip } from '@/components/layout/MetaStrip';
-import { ViewBody } from '@/components/layout/ViewBody';
-import { ConfidenceChip } from '@/components/ui/ConfidenceChip';
-import { Panel } from '@/components/ui/Panel';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { IndexHero } from '@/components/panels/IndexHero';
-import { SpectrumPanel } from '@/components/panels/SpectrumPanel';
-import { CourseCard } from '@/components/panels/CourseCard';
-import { PrInsightList } from '@/components/panels/PrInsightList';
-import { RecommendationList } from '@/components/panels/RecommendationList';
-import { getAuthUser } from '@/lib/auth/session';
-import { getMyView, getPrInsights, getRecommendations, getCourse } from '@/lib/db';
-import type { ConfidenceBand } from '@/lib/types';
+import { COURSE_CATALOG } from '@prism/engine';
+import {
+  activePin, allDevelopers, coachingEventsFor, developerByHandle, developerDetail, userContextFor,
+} from '@/lib/v3/read';
+import { MyView } from '@/components/v3/MyView';
 
-/** Map the DTO confidence-band name onto the ConfidenceChip's lowercase band. */
-const CONFIDENCE_BAND: Record<string, ConfidenceBand> = {
-  High: 'high',
-  Medium: 'medium',
-  Low: 'low',
-  Insufficient: 'insufficient',
-};
+export const dynamic = 'force-dynamic';
 
-export default async function MyView() {
-  const user = await getAuthUser();
-  const employeeId = user?.employeeId ?? null;
+const DEFAULT_DEV = 'tom';   // context_hand_carrier — the richest coaching/growth story
 
-  // No resolvable employee (unauthenticated, no demo) — render chrome + awaiting state.
-  if (!employeeId) {
-    return (
-      <>
-        <MetaStrip
-          title="My view"
-          subtitle="Private to you · visible only to you"
-          who={user?.displayName ?? null}
-          isDemo={user?.isDemo ?? false}
-          actions={<ConfidenceChip band="insufficient" />}
-        />
-        <ViewBody>
-          <Panel eyebrow="your index" title="My index">
-            <EmptyState
-              title="Sign in to see your view"
-              hint="your private AI-Native Index appears once you're signed in"
-            />
-          </Panel>
-        </ViewBody>
-      </>
-    );
-  }
+export default async function V3MePage({ searchParams }: { searchParams: Promise<{ dev?: string }> }) {
+  const { dev: devParam } = await searchParams;
+  const handle = devParam ?? DEFAULT_DEV;
+  const dev = (await developerByHandle(handle)) ?? (await developerByHandle(DEFAULT_DEV));
+  if (!dev) throw new Error('seed developers missing — run npm run v3:reset');
 
-  const [{ index, meta }, prInsights, recommendations, course] = await Promise.all([
-    getMyView(employeeId),
-    getPrInsights(employeeId),
-    getRecommendations(employeeId),
-    getCourse(employeeId),
+  const pin = await activePin();
+  const [detail, coaching, userContext, devs] = await Promise.all([
+    developerDetail(dev.id, pin),
+    coachingEventsFor(dev.id),
+    userContextFor(dev.id),
+    allDevelopers(),
   ]);
+  if (!detail) throw new Error('developer detail missing');
+
+  // Improvement areas for self-learning = this dev's confirmed actionable
+  // insights (rec/nudge channel), each mapped to the courses that lift its KPI.
+  const areas = detail.insights
+    .filter((i) => i.channel === 'rec' || i.channel === 'nudge')
+    .map((i) => ({
+      key: `${i.kpi_id}/${i.hypothesis}`,
+      title: i.title,
+      body: i.body,
+      kpiId: i.kpi_id,
+      courseIds: COURSE_CATALOG.filter((c) => (c.targets as string[]).includes(i.kpi_id)).map((c) => c.id),
+    }));
+
+  // Course grid: recommended first (targets a weak KPI of this dev).
+  const weakKpis = new Set(detail.kpis.filter((k) => k.score !== null && k.score < 60).map((k) => k.kpi_id as string));
+  const courses = [...COURSE_CATALOG]
+    .sort((a, b) => Number(b.targets.some((t) => weakKpis.has(t))) - Number(a.targets.some((t) => weakKpis.has(t))))
+    .map((c) => ({ ...c, recommended: c.targets.some((t) => weakKpis.has(t)) }));
 
   return (
-    <>
-      <MetaStrip
-        title="My view"
-        subtitle="Private to you · visible only to you"
-        who={user?.displayName ?? meta.scopeLabel}
-        isDemo={user?.isDemo ?? false}
-        actions={<ConfidenceChip band={CONFIDENCE_BAND[meta.confidence] ?? 'insufficient'} />}
-      />
-      <ViewBody>
-        {/* ── .hero — L1 index card + spectrum vs squad ── */}
-        <div className="hero">
-          <IndexHero index={index} vsSquad />
-          <SpectrumPanel spectrum={index.spectrum} showVsSquad />
-        </div>
-
-        {/* ── course row — full-width assigned course ── */}
-        <div className="row" style={{ gridTemplateColumns: '1fr' }}>
-          <CourseCard course={course} />
-        </div>
-
-        {/* ── .row.r2 — Recent PR insights · Recommended for you ── */}
-        <div className="row r2">
-          <div className="card">
-            <div className="cardhead">
-              <h3>Recent PR insights</h3>
-              <span className="sub">prompt quality · rework · AI-slop</span>
-            </div>
-            <PrInsightList insights={prInsights} />
-          </div>
-          <div className="card">
-            <div className="cardhead">
-              <h3>Recommended for you</h3>
-              <span className="sub">monitored for adoption</span>
-            </div>
-            <RecommendationList recommendations={recommendations} />
-          </div>
-        </div>
-
-        <div className="foot">
-          Your view is private. Managers see squad aggregates and coaching themes, not your raw PR
-          list.
-        </div>
-      </ViewBody>
-    </>
+    <MyView
+      pin={{ version: pin.version, date: pin.date }}
+      dev={{ id: dev.id, handle: dev.handle, name: dev.name, archetype: dev.archetype }}
+      devOptions={devs.map((d) => ({ handle: d.handle, name: d.name }))}
+      main={detail.main}
+      harness={detail.harness}
+      insights={detail.insights}
+      recommendations={detail.recommendations}
+      coaching={coaching}
+      courses={courses}
+      areas={areas}
+      userContext={userContext}
+    />
   );
 }

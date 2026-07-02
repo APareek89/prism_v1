@@ -115,7 +115,7 @@ export function TeamTable({ rows }: { rows: TeamTableRow[] }) {
             </td>
             <td className="trendcell" style={{ color: 'var(--mut)' }}>{r.insightCount} · {r.recCount}</td>
             <td>
-              <Link className="linkbtn" href={`/v3/dev/${r.handle}`} style={{ textDecoration: 'none', display: 'inline-block' }}>
+              <Link className="linkbtn" href={`/team/${r.handle}`} style={{ textDecoration: 'none', display: 'inline-block' }}>
                 drill in
               </Link>
             </td>

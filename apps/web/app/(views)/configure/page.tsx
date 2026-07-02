@@ -1,4 +1,6 @@
-// /v3/configure — the model rendered FROM the DB (v3 preview). v1 page skeleton:
+// app/(views)/configure/page.tsx
+//
+// Configure — the model rendered FROM the DB. v1 page skeleton:
 // .top header → .daterow pills → the config cards (tables) → .foot.
 
 import { activeConfigVersion, activePin, dataPoints, kpiCatalog } from '@/lib/v3/read';

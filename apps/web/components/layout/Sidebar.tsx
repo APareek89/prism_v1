@@ -10,7 +10,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PrismLogo } from '@/components/brand/PrismLogo';
-import { NAV_ITEMS, V3_NAV_ITEMS, activeItem, isActive, type NavItem } from '@/lib/nav/routes';
+import { NAV_ITEMS, isActive, type NavItem } from '@/lib/nav/routes';
 
 function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   return (
@@ -46,7 +46,6 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
 
 export function Sidebar() {
   const pathname = usePathname() ?? '/';
-  const v3Active = activeItem(pathname, V3_NAV_ITEMS);
 
   return (
     <aside
@@ -81,22 +80,6 @@ export function Sidebar() {
           <NavLink key={item.href} item={item} active={isActive(pathname, item)} />
         ))}
 
-        {/* v3 preview group — the .grp section-label treatment */}
-        <span
-          style={{
-            color: 'var(--mut2)',
-            fontSize: 10,
-            letterSpacing: '0.14em',
-            textTransform: 'uppercase',
-            margin: '18px 12px 6px',
-            fontFamily: 'var(--mono)',
-          }}
-        >
-          v3 preview · demo
-        </span>
-        {V3_NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} active={v3Active?.href === item.href} />
-        ))}
       </nav>
 
       <div style={{ marginTop: 'auto', padding: '0 8px' }}>
