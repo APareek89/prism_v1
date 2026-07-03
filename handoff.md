@@ -13,7 +13,7 @@ deterministic demo dataset. Numbers are deterministic and LLM-free; narration is
 
 ---
 
-## Status at a glance (2026-07-02)
+## Status at a glance (2026-07-03 — session closed)
 
 | Piece | State |
 |---|---|
@@ -156,20 +156,26 @@ Env: `.env.local` at repo root (gitignored, symlinked into apps/web). Needs `SUP
 ## Next session — paste-ready prompt
 ```
 Continue Prism at "/Users/anandpareek/Documents/Prism v1" (LOCAL repo, no remote/PRs).
-This is the UNIFIED app: four tabs (Function/Team/My view/Configure), v1 UI, v3.0 model,
-deterministic demo data in Postgres schema v3.
-FIRST read, in order: (1) handoff.md — today's state + the PENDING backlog; (2)
-docs/scoring-model.md — the v3.0 model spec; (3) CLAUDE.md — hard rules incl. the scoped
-v3 dummy-data exception; (4) services/ingest/README.md — the ingestion contract.
+STATE: unified app — four tabs (Function/Team/My view/Configure), v1 UI, v3.0
+deterministic engine, demo data in Postgres schema v3 — PLUS the agentic coaching flow
+(apps/web/lib/v3/agents: FACTS assembly → grounded LLM good/bad insights + course picks +
+typed suggestions → v3.agent_artifacts; "Run coaching agent" on My view; adopt-loop via
+v3.user_context so the next run builds on what I adopted).
+FIRST read, in order: (1) handoff.md — the AGENTIC FLOW section + PENDING backlog;
+(2) docs/scoring-model.md — the v3.0 model spec; (3) CLAUDE.md — hard rules;
+(4) services/ingest/README.md — the ingestion contract.
 ENVIRONMENT: export PATH="$HOME/.nvm/versions/node/v22.22.0/bin:$PATH" (default node is
-v18). Dev server: cd apps/web && npx next dev -p 3030 (ONE dev server at a time — see the
-webpack-cache gotcha in handoff). Data: npm run v3:reset + npm run v3:recompute. Verify UI
-with the Playwright MCP and LOOK at screenshots.
-HARD RULES: v1 design system only (no new styling) · synthetic data only in schema v3 ·
+v18 — too old). ONE dev server at a time: cd apps/web && npx next dev -p 3030 (see the
+webpack-cache gotcha in handoff before ever starting a second server). Data:
+npm run v3:reset + npm run v3:recompute. The agent uses ANTHROPIC_API_KEY from .env.local
+(keyless → deterministic mock). Verify UI with the Playwright MCP and LOOK at screenshots.
+HARD RULES: index math stays deterministic (engine is LLM-free; the agent only interprets)
+· v1 design system only (no new styling) · synthetic data only in schema v3 ·
 apps/web/lib/scoring stays parked · update handoff.md before ending.
-Work the PENDING list top-down unless I say otherwise, starting with #1 (user_context →
-Function rollup) and #2 (adoption re-verification loop). After reading, give me the current
-state in 5 lines and wait for my instruction.
+WORK the PENDING list top-down unless I redirect: #1 user_context → Function rollup,
+#2 adoption re-verification loop, then #9 agent hardening (batch run for all 10 devs,
+drill-in surfacing, cost guard, tests). After reading, give me the current state in
+5 lines and wait for my instruction.
 ```
 
 ---
