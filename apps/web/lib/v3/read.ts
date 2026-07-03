@@ -3,7 +3,7 @@
 // so a Configure save + recompute flips every page atomically.
 
 import type {
-  Band, CoachingEventRow, ConfigVersionRow, DataPointRow, DeveloperRow,
+  AgentArtifactRow, Band, CoachingEventRow, ConfigVersionRow, DataPointRow, DeveloperRow,
   IndexDailyRow, InsightRow, KpiCatalogRow, KpiDailyRow, RecommendationRow,
   UserContextRow,
 } from '@prism/contract';
@@ -128,6 +128,17 @@ export async function activeConfigVersion(): Promise<ConfigVersionRow> {
   const { rows } = await v3db().query('select * from v3.config_versions where active limit 1');
   if (!rows[0]) throw new Error('no active config version');
   return rows[0] as ConfigVersionRow;
+}
+
+export async function agentArtifactsFor(devId: string, pin: ActivePin): Promise<AgentArtifactRow[]> {
+  if (pin.date === null) return [];
+  const { rows } = await v3db().query(
+    `select * from v3.agent_artifacts
+     where developer_id = $1 and date = $2 and config_version = $3
+     order by kind, created_at`,
+    [devId, pin.date, pin.version],
+  );
+  return rows as AgentArtifactRow[];
 }
 
 export async function allDevelopers(): Promise<DeveloperRow[]> {

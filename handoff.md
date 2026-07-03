@@ -23,6 +23,7 @@ deterministic demo dataset. Numbers are deterministic and LLM-free; narration is
 | **Unified UI** — Function/Team/My view/Configure on the v3 engine, v1 design | ✅ DONE (verified in-browser, tab by tab) |
 | Configure loop (edit weights · delete-KPI w/ proportional redistribution · save → new config version → full recompute → all views flip together) | ✅ DONE (active = config v5) |
 | Growth actions → real `v3.user_context` rows (optimistic UI, survives reload) | ✅ DONE |
+| **Agentic coaching flow** (LLM good/bad insights · course picks · practice suggestions, grounded, per-dev, on-demand) | ✅ DONE (2026-07-03, live-verified with claude-sonnet-4-6) |
 | Pipeline coherence (Function median = median of Team rows; same insight/rec rows across views) | ✅ VERIFIED against DB |
 | v1 Admin section | ❌ REMOVED (owner decision) — `/admin` 404s |
 | Old v1 scoring | 🅿 PARKED — `apps/web/lib/scoring` untouched, its 143 tests still green (241 web tests total) |
@@ -53,6 +54,24 @@ deterministic demo dataset. Numbers are deterministic and LLM-free; narration is
 6. Fresh repo cut here ("Prism v1"), Admin removed, initial commits made; old repo's PR #17
    closed unmerged.
 
+## AGENTIC FLOW (added 2026-07-03) — how it works
+Owner boundary: INDEX MATH STAYS DETERMINISTIC; once indexes exist, the agent reads the
+developer's OWN inputs and produces artifacts. Chain (apps/web/lib/v3/agents/):
+`facts.ts` (deterministic assembly: KPIs+meta · indexes · engine findings · coaching
+outcomes · user_context adoptions · org skills · repo flags · course catalog → one FACTS
+block) → `run.ts` (3 tool-forced structured calls via `model.ts`: good/bad · course picks ·
+suggestions) → grounding gate (numbers must appear in FACTS; 1 repair retry, then drop;
+reuses lib/agents/grounding.ts) → code-level ref validation (course/KPI/skill ids) →
+`v3.agent_artifacts` (migration v3_0006), pinned to (date, config_version).
+UI: My view Index tab = "Coaching agent — your read" (good `.wellitem` / bad `.insitem`,
+provenance chip, Run/Re-run button → POST /api/v3/agent) · Growth = Coach's picks +
+typed suggestions (skill/verification/prompt/context/process) with "I adopted this" →
+user_context ref `agent-suggestion:<title>` → NEXT run sees it under ALREADY ADOPTED and
+builds on it (the loop closes). Keyless fallback: deterministic mock (`mock.ts`,
+model='mock'). Gate = ANTHROPIC_API_KEY presence (DEMO_MODE does NOT force mock — decision).
+GOTCHA: the installed @langchain/anthropic (0.3.x) sends top_p=-1 which current Claude
+models reject — the agent uses @anthropic-ai/sdk directly with tool-forced output instead.
+
 ## PENDING — tomorrow's backlog (rough priority order)
 1. **user_context → Function rollup.** Growth clicks land in `v3.user_context` but only feed
    the My-view "what's driving improvement" strip. Add the management-facing evidence card on
@@ -81,7 +100,10 @@ deterministic demo dataset. Numbers are deterministic and LLM-free; narration is
 8. **Real ingestion (teammate).** Replace seed sections 1:1 per `services/ingest/README.md`
    (P1 GitHub App → P2 parser extensions → P3 deployments → P4 telemetry/plugin). Live
    coaching stays a replay simulation until the P4 plugin exists.
-9. **Housekeeping.** Decide fate of parked v1 code (lib/scoring, old panels, connectors,
+9. **Agent hardening.** Batch "run for all 10 devs" action · surface agent artifacts on the
+   member drill-in and a team-level rollup of common suggestions · unit tests for facts
+   assembly + grounding round-trip (mock path) · rate/cost guard on the API route.
+10. **Housekeeping.** Decide fate of parked v1 code (lib/scoring, old panels, connectors,
    DEMO_MODE auth — keep parked vs delete at real-data implementation); create a remote for
    this repo if/when wanted; CLAUDE.md still references the old dogfooding-PR workflow (no
    remote here yet); old `~/Documents/prism` cleanup.

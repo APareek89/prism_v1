@@ -8,9 +8,10 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { CoachingEventRow, IndexDailyRow, InsightRow, RecommendationRow, UserContextRow } from '@prism/contract';
+import type { AgentArtifactRow, CoachingEventRow, IndexDailyRow, InsightRow, RecommendationRow, UserContextRow } from '@prism/contract';
 import { InsightList, RecList, V3IndexHero, V3Spectrum } from './detail';
 import { CoachingReplay } from './CoachingReplay';
+import { AgentGoodBad } from './AgentPanel';
 import { GrowthTab, type Area, type CourseVM } from './GrowthTab';
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
   insights: InsightRow[];
   recommendations: RecommendationRow[];
   coaching: CoachingEventRow[];
+  artifacts: AgentArtifactRow[];
   courses: CourseVM[];
   areas: Area[];
   userContext: UserContextRow[];
@@ -88,10 +90,11 @@ export function MyView(p: Props) {
             <V3IndexHero main={p.main} />
             <V3Spectrum values={{ usage: p.main?.dimensions?.usage ?? null, efficiency: p.main?.dimensions?.efficiency ?? null, outcomes: p.main?.dimensions?.outcomes ?? null, harness: p.harness?.score ?? null }} />
           </div>
+          <AgentGoodBad artifacts={p.artifacts} developerId={p.dev.id} />
           <InsightList
             insights={p.insights}
-            title="Your insights"
-            sub="read-only — actions live in Live coaching (in-flow) and Growth (self-driven)"
+            title="Deterministic findings (what the agent reads)"
+            sub="engine-computed, hypothesis-tested — the evidence behind the agent's read"
           />
         </>
       ) : null}
@@ -109,6 +112,7 @@ export function MyView(p: Props) {
           courses={p.courses}
           areas={p.areas}
           userContext={p.userContext}
+          artifacts={p.artifacts}
         />
       ) : null}
 

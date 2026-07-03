@@ -1,7 +1,7 @@
 // GENERATED FILE — do not edit by hand.
 // Regenerate with: npm run generate --workspace packages/contract
 // Source of truth: the LIVE v3 schema (services/ingest/migrations applied to SUPABASE_DB_URL).
-// Generated: from schema v3 (17 tables).
+// Generated: from schema v3 (18 tables).
 //
 // NOTE for consumers using `pg`: register type parsers so bigint/numeric come
 // back as JS numbers, e.g.
@@ -13,6 +13,24 @@ import type {
   HarnessCategory, IndexConfig, IndexKind, Intervention, KpiId, KpiIndexKind,
   LinkMethod, ReliabilityTier, UserContextKind,
 } from './domain';
+
+/** v3.agent_artifacts */
+export interface AgentArtifactRow {
+  id: string;
+  developer_id: string;
+  date: string;
+  config_version: number;
+  kind: 'good' | 'bad' | 'course' | 'suggestion';
+  ref: string | null;
+  title: string;
+  body: string;
+  category: 'skill' | 'verification' | 'prompt' | 'context' | 'process' | null;
+  targets: string[];
+  model: string;
+  grounded: boolean;
+  meta: Record<string, unknown>;
+  created_at: string;
+}
 
 /** v3.ai_pr_links */
 export interface AiPrLinkRow {

@@ -1,5 +1,6 @@
 // v3 read/write pool (apps/web). The web app READS v3.* for display and WRITES
-// exactly one table: v3.user_context. All computed rows come from the engine.
+// two tables: v3.user_context (Growth clicks) and v3.agent_artifacts (the
+// coaching agent). All deterministic computed rows come from the engine.
 // Keyless-boot invariant: nothing throws at import time; the pool is lazy.
 
 import pg from 'pg';

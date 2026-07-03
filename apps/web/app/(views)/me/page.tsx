@@ -6,7 +6,8 @@
 
 import { COURSE_CATALOG } from '@prism/engine';
 import {
-  activePin, allDevelopers, coachingEventsFor, developerByHandle, developerDetail, userContextFor,
+  activePin, agentArtifactsFor, allDevelopers, coachingEventsFor, developerByHandle,
+  developerDetail, userContextFor,
 } from '@/lib/v3/read';
 import { MyView } from '@/components/v3/MyView';
 
@@ -21,11 +22,12 @@ export default async function V3MePage({ searchParams }: { searchParams: Promise
   if (!dev) throw new Error('seed developers missing — run npm run v3:reset');
 
   const pin = await activePin();
-  const [detail, coaching, userContext, devs] = await Promise.all([
+  const [detail, coaching, userContext, devs, artifacts] = await Promise.all([
     developerDetail(dev.id, pin),
     coachingEventsFor(dev.id),
     userContextFor(dev.id),
     allDevelopers(),
+    agentArtifactsFor(dev.id, pin),
   ]);
   if (!detail) throw new Error('developer detail missing');
 
@@ -57,6 +59,7 @@ export default async function V3MePage({ searchParams }: { searchParams: Promise
       insights={detail.insights}
       recommendations={detail.recommendations}
       coaching={coaching}
+      artifacts={artifacts}
       courses={courses}
       areas={areas}
       userContext={userContext}

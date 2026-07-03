@@ -59,6 +59,10 @@ const OVERRIDES = {
   'data_points.fetch_tag': 'FetchTag',
   'config_versions.config': 'IndexConfig',
   'user_context.kind': 'UserContextKind',
+  'agent_artifacts.kind': "'good' | 'bad' | 'course' | 'suggestion'",
+  'agent_artifacts.category': "'skill' | 'verification' | 'prompt' | 'context' | 'process' | null",
+  'agent_artifacts.targets': 'string[]',
+  'agent_artifacts.meta': 'Record<string, unknown>',
   'user_context.meta': 'Record<string, unknown>',
 };
 

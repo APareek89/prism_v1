@@ -6,7 +6,8 @@
 // Buttons INSERT real rows into v3.user_context (optimistic UI + rollback).
 
 import { useMemo, useState } from 'react';
-import type { UserContextRow } from '@prism/contract';
+import type { AgentArtifactRow, UserContextRow } from '@prism/contract';
+import { AgentCoursePicks, AgentSuggestions } from './AgentPanel';
 
 export interface CourseVM {
   id: string;
@@ -32,6 +33,7 @@ interface Props {
   courses: CourseVM[];
   areas: Area[];
   userContext: UserContextRow[];
+  artifacts: AgentArtifactRow[];
 }
 
 // KPI family → the .wellitem category treatments (globals.css).
@@ -46,7 +48,7 @@ const AREA_CAT: Record<string, { cls: string; glyph: string }> = {
   linkage: { cls: 'skill', glyph: '🔗' },
 };
 
-export function GrowthTab({ developerId, courses, areas, userContext }: Props) {
+export function GrowthTab({ developerId, courses, areas, userContext, artifacts }: Props) {
   // Optimistic completion state seeded from the real table.
   const [done, setDone] = useState<Set<string>>(
     () => new Set(userContext.map((u) => `${u.kind}:${u.ref}`)),
@@ -110,6 +112,13 @@ export function GrowthTab({ developerId, courses, areas, userContext }: Props) {
         )}
       </div>
 
+      <AgentSuggestions
+        artifacts={artifacts}
+        onAdopt={(ref, label) => record('adopted', ref, label)}
+        adopted={(ref) => done.has(`adopted:${ref}`)}
+        pending={(ref) => pending.has(`adopted:${ref}`)}
+      />
+
       {/* (B) improvement areas from confirmed-hypothesis insights */}
       <div className="card">
         <div className="cardhead">
@@ -155,6 +164,7 @@ export function GrowthTab({ developerId, courses, areas, userContext }: Props) {
           <h3>Courses</h3>
           <span className="sub">recommended first, matched to your weak KPIs · generated thumbnails, no external images</span>
         </div>
+        <AgentCoursePicks artifacts={artifacts} />
         <div className="row r2" style={{ marginBottom: 0 }}>
           {courses.map((c) => {
             const key = `course_completed:${c.id}`;
