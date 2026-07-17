@@ -2,6 +2,7 @@ import { withAdmin } from '@/lib/auth/guards';
 import { readJson, badRequest, ok, serverError } from '@/app/api/connectors/_lib/route-helpers';
 import { createTelemetryInvite } from '@/lib/connectors/telemetry/store';
 import { isTelemetryProvider } from '@/lib/connectors/telemetry/types';
+import { publicEnv } from '@/lib/config/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +18,10 @@ export const POST = withAdmin(async (req, user): Promise<Response> => {
       employeeId: body.employeeId,
       createdByEmployeeId: /^[0-9a-f-]{36}$/i.test(user.employeeId) ? user.employeeId : null,
       provider: body.provider,
-      origin: new URL(req.url).origin,
+      origin: new URL(publicEnv.NEXT_PUBLIC_APP_URL).origin,
     });
     return ok({ ok: true, ...invite });
   } catch (error) {
     return serverError(error instanceof Error ? error.message : 'Could not create invite');
   }
 });
-
