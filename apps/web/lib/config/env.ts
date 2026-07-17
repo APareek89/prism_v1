@@ -75,6 +75,7 @@ const serverSchema = z.object({
 
   // Email (M4)
   RESEND_API_KEY: z.string().optional(),
+  AUTH_FROM_EMAIL: z.string().optional(),
   DIGEST_FROM_EMAIL: z.string().optional(),
   // Svix signing secret for the Resend open/delivery webhook (starts with "whsec_").
   // Optional + keyless-safe: absent ⇒ the webhook rejects unsigned callbacks (200,

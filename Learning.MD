@@ -68,3 +68,13 @@
 **Deepest why type:** `design`
 **Action taken:** Administrators assign a work email to the discovered employee; callback claims only one active, unclaimed, exact normalized-email match and then applies developer/bootstrap-admin roles.
 **Preventive action:** Every new sign-in method must define a unique claim key, conflict behavior, role bootstrap, and unmatched-user failure state before it can expose personal data.
+
+### 2026-07-17 — A correct production callback was still redirected to localhost
+
+**Symptom:** Render accepted the login request, but the Supabase magic link opened `localhost` instead of the hosted app.
+**Why 1:** The requested `redirectTo` was not in the Supabase project's allowed redirect URLs.
+**Why 2:** Supabase safely replaced an unapproved redirect with the configured Site URL.
+**Why 3:** Deployment environment variables and Auth-provider URL configuration are separate control planes.
+**Deepest why type:** `environment`
+**Action taken:** Keep Supabase as token/session authority, but deliver a Resend email whose link points directly to Prism and exchanges Supabase's hashed one-time token at `/auth/callback`.
+**Preventive action:** Every hosted passwordless flow must test the actual received link, not stop at “email request returned 200.”

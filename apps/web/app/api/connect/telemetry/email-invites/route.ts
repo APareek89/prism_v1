@@ -1,10 +1,7 @@
 import { withAdmin } from '@/lib/auth/guards';
 import { badRequest, ok, readJson, serverError } from '@/app/api/connectors/_lib/route-helpers';
-import { createAdminClient } from '@/lib/supabase/admin';
-import {
-  linkInvitedWorkspaceUser,
-  prepareWorkspaceInvite,
-} from '@/lib/auth/workspace';
+import { prepareWorkspaceInvite } from '@/lib/auth/workspace';
+import { sendWorkspaceMagicLink } from '@/lib/auth/magic-link';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,38 +17,14 @@ export const POST = withAdmin(async (req, user): Promise<Response> => {
       employeeId: body.employeeId,
       email: body.email,
     });
-    if (employee.existingUserId) {
-      return ok({
-        ok: true,
-        status: 'already_linked',
-        email: employee.email,
-        detail: 'This person already has workspace access. They can sign in for a fresh magic link.',
-      });
-    }
-
-    const redirectTo = `${new URL(req.url).origin}/auth/callback`;
-    const admin = createAdminClient();
-    const { data, error } = await admin.auth.admin.inviteUserByEmail(employee.email, {
-      redirectTo,
-      data: {
-        prism_employee_id: employee.employeeId,
-        prism_employee_name: employee.employeeName,
-      },
-    });
-    if (error) throw error;
-    if (!data.user?.id) throw new Error('Supabase did not return the invited user.');
-
-    await linkInvitedWorkspaceUser({
-      functionId: user.functionId,
-      employeeId: employee.employeeId,
-      userId: data.user.id,
-    });
+    const sent = await sendWorkspaceMagicLink(employee.email);
+    if (sent.status !== 'sent') throw new Error('The workspace email could not be resolved.');
 
     return ok({
       ok: true,
-      status: 'sent',
+      status: employee.existingUserId ? 'already_linked' : 'sent',
       email: employee.email,
-      detail: 'Supabase sent the workspace invitation. The command will be waiting after sign-in.',
+      detail: 'Prism sent a one-time Supabase login link. The command will be waiting after sign-in.',
     });
   } catch (error) {
     return serverError(error instanceof Error ? error.message : 'Could not send workspace invitation');
