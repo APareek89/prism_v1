@@ -44,7 +44,7 @@ export function RosterTable({ members }: RosterTableProps) {
         {members.length === 0 ? (
           <tr>
             <td colSpan={9} style={{ color: 'var(--mut)', textAlign: 'center', padding: '28px 12px' }}>
-              No engineers onboarded yet — upload the roster CSV in Admin to populate the squad.
+              No engineers discovered yet — connect or resync the GitHub App to populate the team.
             </td>
           </tr>
         ) : (

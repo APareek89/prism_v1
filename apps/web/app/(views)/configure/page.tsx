@@ -1,43 +1,66 @@
-import { activeConfigVersion, activePin, dataPoints, kpiCatalog } from '@/lib/v3/read';
-import { ConfigureTable } from '@/components/v3/ConfigureTable';
 import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
-import { Icon } from '@/components/ui/Icon';
+import { getAuthUser } from '@/lib/auth/session';
+import { isAdmin } from '@/lib/auth/roles';
+import { getIndexConfig, getSizingRule } from '@/lib/db/admin';
+import { DIMENSION_HUES } from '@/app/tokens';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ConfigurePage() {
-  const [catalog, points, active, pin] = await Promise.all([kpiCatalog(), dataPoints(), activeConfigVersion(), activePin()]);
+  const user = await getAuthUser();
+  if (!user || !isAdmin(user)) {
+    return (
+      <div className="page">
+        <PageHeader kicker="Index model" title="Administrator access required" description="Only a workspace administrator can inspect production scoring configuration." />
+      </div>
+    );
+  }
+
+  const [config, sizing] = await Promise.all([
+    getIndexConfig(user.functionId),
+    getSizingRule(user.functionId),
+  ]);
+  const total = config.reduce((sum, row) => sum + row.weightPct, 0);
+
   return (
     <div className="page">
       <PageHeader
-        kicker="System · advanced"
-        title="Make the index match your operating model"
-        description="Inspect every input and adjust weights without rewriting history. Saving creates a new version, then recomputes every view together."
-        actions={<span className="button ghost" aria-label="Deterministic scoring boundary"><Icon name="shield" size={16} /> Deterministic boundary</span>}
+        kicker="Production model · read only"
+        title="The calculation stays deterministic"
+        description="This page reads the active public index configuration. No preview schema or synthetic developer data is involved."
         meta={
           <>
-            <MetaChip label="Active config" value={`v${active.version}`} tone="accent" />
-            <MetaChip label="Last compute" value={pin.date ?? 'Not computed'} />
-            <MetaChip label="Policy" value="Append-only versions" />
+            <MetaChip label="Weight total" value={`${total}%`} tone="accent" />
+            <MetaChip label="Sizing" value={sizing.frozen ? 'Calibrated' : 'Cold-start'} />
+            <MetaChip label="Data" value="Production config" />
           </>
         }
       />
 
-      <div className="note" style={{ marginBottom: 18 }}>
-        <h4>Changing weights changes every published dashboard</h4>
-        <p>Review totals before saving. MAIN and HARNESS each stay at 100%; the two indexes remain separate and are never blended.</p>
+      <div className="model-intro">
+        <div className="model-kind"><strong>Evidence in, score out</strong><p>Every number is produced by the existing scoring library. AI agents can explain results but cannot compute or change them.</p></div>
+        <div className="model-kind"><strong>Insufficient stays insufficient</strong><p>Missing signal produces an empty state, never a fabricated zero and never a demo substitute.</p></div>
       </div>
 
-      <ConfigureTable
-        catalog={catalog}
-        dataPoints={points}
-        activeVersion={active.version}
-        activeNote={active.note}
-        initialConfig={active.config}
-        asOf={pin.date}
-      />
+      <div className="card config-section">
+        <div className="cardhead"><div><span className="page-kicker">Active public configuration</span><h3>Dimension weights and anchors</h3></div><span className="sub">unchanged calculation logic</span></div>
+        <div className="config-real-grid">
+          {config.map((row) => (
+            <article key={row.dimension}>
+              <span className="dimension-dot" style={{ background: DIMENSION_HUES[row.dimension] }} />
+              <div><strong>{row.label}</strong><p>{row.anchorLabel}</p></div>
+              <b>{row.weightPct}%</b>
+            </article>
+          ))}
+        </div>
+      </div>
 
-      <div className="foot">Every version is auditable. Disabling a KPI redistributes its weight only within the same index; prior configurations remain intact.</div>
+      <div className="card config-section">
+        <div className="cardhead"><div><span className="page-kicker">Change sizing</span><h3>{sizing.formula}</h3></div><span className="sub">{sizing.frozen ? 'frozen calibration' : 'cold-start thresholds'}</span></div>
+        <div className="chiplist">{sizing.thresholds.map((threshold) => <span className="meta-chip" key={threshold}>{threshold}</span>)}</div>
+      </div>
+
+      <div className="foot">Changing the production model remains an explicit versioned operation. This real-user launch does not alter any scoring formula.</div>
     </div>
   );
 }

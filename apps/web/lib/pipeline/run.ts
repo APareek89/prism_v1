@@ -3,7 +3,8 @@
 // THE on-demand pipeline: ingest → link → blame → assemble → computeDaily → persist.
 // One call scores a function for a passed run date and lights up the views.
 //
-//   1. INGEST   github (if connected) · claude local sessions (keyless-safe) · sentry (if connected)
+//   1. INGEST   github (if connected) · sentry (if connected). Codex/Claude Code
+//               telemetry arrives through each user's authenticated OTEL connection.
 //   2. LINK     linkAiToPr — correlational AI→PR association (sets gh_prs.ai_assisted)
 //   3. BLAME    refreshBlame — AI-line capture + 30d retention re-check
 //   4. ASSEMBLE build MemberRawRows + sizingPrs + config from the raw tables
@@ -17,7 +18,6 @@
 
 import {
   ingestGitHub,
-  scanLocalSessions,
   ingestSentry,
   linkAiToPr,
   refreshBlame,
@@ -41,7 +41,7 @@ export interface PipelineSummary {
   ok: boolean;
   functionId: string;
   date: string;
-  /** members the engine produced a result for (>= 1: the self employee). */
+  /** members the engine produced a result for (may be 0 before GitHub discovery). */
   membersScored: number;
   /** the function-scope L1 (null when suppressed / no signal). */
   functionL1: number | null;
@@ -100,9 +100,8 @@ async function step(
 
 /**
  * Run the full on-demand pipeline for a function + run date. Returns a summary; never
- * throws (each step is guarded). A keyless boot still runs: claude local sessions are
- * scanned, github/sentry are skipped when unconfigured, and the engine scores whatever
- * real evidence exists (empty → Insufficient/L0, never fabricated).
+ * throws (each step is guarded). GitHub/Sentry are skipped when unconfigured, and the
+ * engine scores whatever real evidence exists (empty → Insufficient, never fabricated).
  */
 export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummary> {
   const { functionId, date } = args;
@@ -114,13 +113,6 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummar
     const r = await ingestGitHub(functionId);
     if (r.errors?.length) errors.push(...r.errors.map((e) => `github: ${e}`));
     return `prs=${r.prsUpserted} commits=${r.commitsUpserted} reverts=${r.revertsMarked}`;
-  });
-
-  // Claude Code reads LOCAL ~/.claude sessions — keyless-safe (dir has a default).
-  await step(steps, 'ingest:claude_code', isConfigured('claudeCode'), async () => {
-    const r = await scanLocalSessions(functionId);
-    if (r.errors?.length) errors.push(...r.errors.map((e) => `claude_code: ${e}`));
-    return `written=${r.written} skipped=${r.skipped}`;
   });
 
   await step(steps, 'ingest:sentry', isConfigured('sentry'), async () => {
@@ -144,7 +136,7 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummar
     return `captured=${r.captured} rechecked=${r.rechecked} alive=${r.alive} dead=${r.dead}`;
   });
 
-  // 4. ASSEMBLE — build the scoring inputs from the raw tables (ensures self employee).
+  // 4. ASSEMBLE — build scoring inputs from real raw rows and the discovered roster.
   let assembled;
   try {
     assembled = await assembleMembers(functionId, date);

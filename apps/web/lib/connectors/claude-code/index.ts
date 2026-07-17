@@ -1,6 +1,6 @@
 // lib/connectors/claude-code/index.ts
 //
-// ClaudeCodeConnector — the demo's make-or-break Usage/Efficiency source. It reads
+// ClaudeCodeConnector — legacy local-file ingestion. It reads
 // the user's LOCAL ~/.claude session .jsonl files (READ-ONLY), parses them with the
 // pure parser, derives cost from the per-model rate card, and upserts cc_sessions.
 //
@@ -14,7 +14,7 @@
 //   • Keyless-safe: CLAUDE_LOCAL_SESSIONS_DIR has a default (~/.claude); if the dir
 //     is missing, status is 'not_configured', nothing is written, nothing throws.
 //   • No dummy data: writes only real parsed sessions; an empty dir writes nothing.
-//   • Single-person demo binds every session to the is_demo "self employee".
+//   • Local files remain unbound; authenticated OTEL is the multi-user path.
 //   • OTEL path is a typed no-op (otel-stub.ts); OTEL_LOG_USER_PROMPTS stays off.
 
 import { isConfigured } from '@/lib/config/env';
@@ -57,7 +57,7 @@ class ClaudeCodeConnector implements ClaudeCodeConnectorApi {
       // 1) Walk + parse local .jsonl files (READ-ONLY).
       const scan = await scanLocalSessionFiles();
 
-      // 2) Persist (binds to the self employee; classifies BYO coverage).
+      // 2) Persist as unbound legacy evidence; classify BYO coverage.
       const persisted = await persistSessions(functionId, scan.sessions);
       result.written = persisted.written;
       result.skipped = persisted.skipped;

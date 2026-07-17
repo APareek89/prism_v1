@@ -1,35 +1,46 @@
-// app/auth/sign-in/page.tsx
-//
-// Sign-in. Server component that reads DEMO_MODE and renders the client form. The
-// "Continue as demo user" button only appears in DEMO_MODE.
-
 import { PrismLogo } from '@/components/brand/PrismLogo';
-import { isDemoMode } from '@/lib/config/flags';
+import { Icon } from '@/components/ui/Icon';
 import { SignInForm } from './SignInForm';
 
-export default function SignInPage() {
-  const demoMode = isDemoMode();
+const ERROR_MESSAGES: Record<string, string> = {
+  auth: 'That sign-in link is invalid or expired. Request a fresh one below.',
+  unmatched: 'This email is not assigned to an active Prism team member. Ask your administrator to add it in Connect.',
+  workspace: 'Your login succeeded, but Prism could not link the workspace. Ask your administrator to retry the invitation.',
+};
+
+export default async function SignInPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const error = params.error ? ERROR_MESSAGES[params.error] ?? 'Could not complete sign-in.' : null;
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 22,
-        padding: 48,
-      }}
-    >
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-        <PrismLogo size={44} />
-        <h1 className="display" style={{ fontSize: 22, fontWeight: 700 }}>
-          Sign in to Prism
-        </h1>
-        <p style={{ fontSize: 12.5, color: 'var(--mut2)' }}>One light · four signals</p>
-      </div>
-      <SignInForm demoMode={demoMode} />
-    </div>
+    <main className="auth-page">
+      <section className="auth-story">
+        <div className="auth-brand"><span><PrismLogo size={30} /></span><strong>Prism</strong></div>
+        <div>
+          <span className="auth-eyebrow">Private developer workspace</span>
+          <h1>Connect your coding agent without sharing your code.</h1>
+          <p>Sign in with the email linked to your GitHub identity. Your one-time Codex or Claude Code command will be waiting inside.</p>
+        </div>
+        <div className="auth-contract">
+          <span><Icon name="check" size={16} /><b>Real users only</b></span>
+          <span><Icon name="check" size={16} /><b>One-time personal command</b></span>
+          <span><Icon name="check" size={16} /><b>Prompts and source code stay local</b></span>
+        </div>
+      </section>
+
+      <section className="auth-panel">
+        <div className="auth-panel-inner">
+          <span className="page-kicker">Passwordless access</span>
+          <h2>Sign in to your workspace</h2>
+          <p>Use the same email your Prism administrator invited. Supabase will send a secure magic link.</p>
+          <SignInForm initialEmail={params.email ?? ''} initialError={error} />
+          <small>After sign-in: choose Codex or Claude Code → generate command → copy → run in Terminal.</small>
+        </div>
+      </section>
+    </main>
   );
 }

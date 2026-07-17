@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: ae542c4de0f2 · branch: `codex/experience-rebuild` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 8aea7aa · branch: `codex/experience-rebuild` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -14,14 +14,20 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - ✅ Per-person Codex/Claude Code setup uses hashed 15-minute one-time invites, hashed collector tokens, config backup, OTLP/HTTP JSON, prompt logging off, connection checks, and revocation.
 - ✅ Collector persists only allowlisted session/model/turn/token/cache/prompt-length/success metadata; bodies and unknown attributes are discarded and events are idempotent.
 - ✅ Migration `0034_connect_mvp.sql` is applied to the live DB; no test invites/connections/events/sessions remain. Real public GitHub rows were preserved.
-- ✅ Browser-verified `/connect` at 1440px/390px with zero errors/overflow; 292 tests, typecheck, build, and 2/2 Mermaid validation pass; scoring/engine files are untouched.
+- ✅ Supabase passwordless sign-in links one auth user to exactly one active GitHub-discovered employee by normalized email; no demo-user/session fallback remains.
+- ✅ `/me` now leads with a personal Codex/Claude Code command, one-time status, refresh, disconnect, and privacy explanation. Admin `/connect` can assign an email and send the Supabase invitation.
+- ✅ All product pages read real `public.*` rows through RLS. The v3 demo UI/API/seed service and live `v3` schema were removed; the live DB has 0 demo employees and 4 active GitHub-discovered employees.
+- ✅ Browser-verified sign-in at 1440px/390px with zero errors/overflow; 294 tests, typecheck, and production build pass; scoring/engine files are untouched.
 
 ## Product/architecture decisions
 
 - 2026-07-17 — GitHub connection is function/account-level; Codex and Claude Code consent is per person because telemetry originates on each developer machine.
 - 2026-07-17 — Tonight's collector accepts OTLP/HTTP JSON and maps its bearer token directly to function → employee → provider; only token hashes are stored.
-- 2026-07-17 — Live connector data remains in `public.*` and visible in Connect; v3 decision views remain demo-only until a production adapter is built. Missing evidence stays insufficient, never false.
+- 2026-07-17 — All product views use real `public.*` rows. Missing evidence stays insufficient, never false; the deterministic index calculation remains unchanged.
 - 2026-07-17 — Local installers back up user config and replace only the selected tool's OTel settings; prompt/content logging remains disabled.
+- 2026-07-17 — Owner retired the v3 demo exception. Missing data is an honest insufficient/empty state; neither UI, pipeline, nor a connector may create a placeholder employee.
+- 2026-07-17 — Workspace identity claim is exact normalized email only. A successful first real login receives developer plus bootstrap admin; later users receive developer unless explicitly promoted.
+- 2026-07-17 — Supabase Auth owns login/invitation email. `DIGEST_FROM_EMAIL` remains only the visible sender for optional Resend digest mail.
 
 ## Hard boundaries
 
@@ -31,10 +37,11 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 
 ## Gotchas / next
 
-- Test user action: open `/connect` → APareek89 → Connect Codex/Claude Code → run the fresh one-time command → start a new tool session → refresh status.
-- `RESEND_API_KEY` and `DIGEST_FROM_EMAIL` are blank, so teammate onboarding is copy-command only; add them before implementing email invitations.
-- `NEXT_PUBLIC_APP_URL` is local HTTP. A hosted collector/GitHub callback needs a stable HTTPS URL; GitHub App permissions should be reduced before production.
+- Test user action after deployment: request the APareek89 work-email login, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
+- `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block Supabase Auth mail; configure Supabase custom SMTP for non-project-team recipients. Digest delivery remains off until a verified digest sender is configured.
+- Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
+- Add the hosted `/auth/callback` to Supabase Auth redirect URLs and the hosted `/api/connectors/github/install` URL to the GitHub App setup/callback configuration.
 - Exact AI-session → repo/branch/PR, verification, context-read, and review-loop evidence still needs the metadata-only Prism Bridge/production adapter.
-- `Loop.MD` remains offered. Full FMEA and paid coaching golden evals require owner approval. This clone has no remote, so no PR can be opened yet.
+- `Loop.MD` remains offered. Full FMEA and paid coaching golden evals require owner approval.
 
-**Session efficiency:** 🎯 ~66% feature · 🔧 ~27% verification/docs/environment · 🔁 ~7% rework (hydration-format fix + privacy allowlist tightening)
+**Session efficiency:** 🎯 ~62% feature · 🔧 ~31% verification/docs/deployment · 🔁 ~7% rework (legacy demo-write audit + lockfile cleanup)

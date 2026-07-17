@@ -13,11 +13,14 @@
 <h1>Architecture Flow</h1>
 <h2>Prism product decision flow</h2>
 <pre class="mermaid">%% Prism product decision flow
-%% verified: 2026-07-17 Codex experience rebuild
-%% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/components/v3/MyView.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/v3/read.ts, apps/web/lib/v3/rollup.ts
+%% verified: 2026-07-17 real-only workspace rebuild
+%% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/db/index.ts
 %% granularity: master
 flowchart LR
-  A["Raw engineering signals&lt;br/&gt;GitHub + AI sessions + optional reliability"] --&gt; B["Deterministic engine&lt;br/&gt;MAIN + HARNESS + evidence"]
+  K["GitHub App&lt;br/&gt;FUNCTION · real team + delivery"] --&gt; A["public evidence&lt;br/&gt;DATA · real rows only"]
+  L["Supabase-linked developer&lt;br/&gt;FUNCTION · exact email claim"] --&gt; M["Personal OTEL setup&lt;br/&gt;FUNCTION · Codex or Claude Code"]
+  M --&gt; A
+  A --&gt; B["Deterministic engine&lt;br/&gt;MAIN + HARNESS + evidence"]
   B --&gt; C[("Who is looking?&lt;br/&gt;FUNCTION · route + role context")]
   C --&gt;|"Engineering leader"| D["Function overview&lt;br/&gt;current impact + constraint + priority"]
   C --&gt;|"Team coach"| E["People view&lt;br/&gt;support signals + drill-down"]
@@ -29,7 +32,8 @@ flowchart LR
   H --&gt; I["Action&lt;br/&gt;recommendation + owner + adoption"]
   G --&gt; J["New config version&lt;br/&gt;full deterministic recompute"]
   J --&gt; B
-  class A,B,H,J fn;
+  class K,L,M,B,H,J fn;
+  class A data;
   class C dec;
   class D,E,F,G,I term;
   classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
@@ -41,24 +45,28 @@ flowchart LR
 </pre>
 <h2>Prism live connection flow</h2>
 <pre class="mermaid">%% Prism live connection flow
-%% verified: 2026-07-17 Connect MVP
-%% files: apps/web/app/(views)/connect/page.tsx, apps/web/components/connect/ConnectClient.tsx, apps/web/app/api/connectors/github/install/route.ts, apps/web/app/api/connect/telemetry/invites/route.ts, apps/web/app/api/connect/telemetry/install/[provider]/route.ts, apps/web/app/api/connect/telemetry/otel/[...signal]/route.ts, apps/web/lib/connectors/telemetry/normalize.ts, apps/web/lib/connectors/telemetry/store.ts, apps/web/supabase/migrations/0034_connect_mvp.sql
+%% verified: 2026-07-17 real-only login and workspace command
+%% files: apps/web/app/(views)/connect/page.tsx, apps/web/components/connect/ConnectClient.tsx, apps/web/app/auth/callback/route.ts, apps/web/lib/auth/workspace.ts, apps/web/app/(views)/me/page.tsx, apps/web/components/connect/WorkspaceTelemetryCard.tsx, apps/web/app/api/connect/telemetry/otel/[...signal]/route.ts, apps/web/lib/connectors/telemetry/store.ts
 %% granularity: master
 flowchart LR
   A["Admin selects GitHub App installation&lt;br/&gt;FUNCTION · existing or new install"] --&gt; B["GitHub connector sync&lt;br/&gt;FUNCTION · repos + PRs + commits + members"]
   B --&gt; C[("public raw evidence&lt;br/&gt;DATA · real rows only")]
   C --&gt; D["Connect tab readiness&lt;br/&gt;FUNCTION · team + coverage"]
-  D --&gt; E["Personal one-time invite&lt;br/&gt;FUNCTION · hashed + 15-minute expiry"]
-  E --&gt; F["Local config installer&lt;br/&gt;FUNCTION · backup + prompts off"]
-  F --&gt; G["OTLP/HTTP JSON&lt;br/&gt;LIBRARY · per-user token"]
-  G --&gt; H{"Metadata allowlist&lt;br/&gt;FUNCTION · content discarded"}
-  H --&gt; I[("telemetry_events + cc_sessions&lt;br/&gt;DATA · deduped metadata")]
-  I --&gt; D
-  C -. "production adapter pending" .-&gt; J["Deterministic MAIN + HARNESS engine&lt;br/&gt;FUNCTION · formulas unchanged"]
-  I -. "production adapter pending" .-&gt; J
-  class A,D,E,F,J fn;
-  class B,C,G,I data;
-  class H dec;
+  D --&gt; E["Assign exact work email&lt;br/&gt;FUNCTION · GitHub employee identity"]
+  E --&gt; F["Supabase Auth invitation&lt;br/&gt;FUNCTION · real session + RLS"]
+  F --&gt; G["My workspace&lt;br/&gt;FUNCTION · personal command"]
+  D --&gt; G
+  G --&gt; H["Hashed one-time setup&lt;br/&gt;FUNCTION · 15-minute expiry"]
+  H --&gt; I["Local config installer&lt;br/&gt;FUNCTION · backup + prompts off"]
+  I --&gt; J["OTLP/HTTP JSON&lt;br/&gt;LIBRARY · per-user token"]
+  J --&gt; K{"Metadata allowlist&lt;br/&gt;FUNCTION · content discarded"}
+  K --&gt; L[("telemetry_events + cc_sessions&lt;br/&gt;DATA · deduped metadata")]
+  L --&gt; G
+  C --&gt; M["Deterministic MAIN + HARNESS engine&lt;br/&gt;FUNCTION · formulas unchanged"]
+  L --&gt; M
+  class A,D,E,F,G,H,I,M fn;
+  class B,C,J,L data;
+  class K dec;
   classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
   classDef fn fill:#dcfce7,stroke:#16a34a,color:#052e16;
   classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;

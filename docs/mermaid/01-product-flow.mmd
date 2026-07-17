@@ -1,9 +1,12 @@
 %% Prism product decision flow
-%% verified: 2026-07-17 Codex experience rebuild
-%% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/components/v3/MyView.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/v3/read.ts, apps/web/lib/v3/rollup.ts
+%% verified: 2026-07-17 real-only workspace rebuild
+%% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/db/index.ts
 %% granularity: master
 flowchart LR
-  A["Raw engineering signals<br/>GitHub + AI sessions + optional reliability"] --> B["Deterministic engine<br/>MAIN + HARNESS + evidence"]
+  K["GitHub App<br/>FUNCTION · real team + delivery"] --> A["public evidence<br/>DATA · real rows only"]
+  L["Supabase-linked developer<br/>FUNCTION · exact email claim"] --> M["Personal OTEL setup<br/>FUNCTION · Codex or Claude Code"]
+  M --> A
+  A --> B["Deterministic engine<br/>MAIN + HARNESS + evidence"]
   B --> C[("Who is looking?<br/>FUNCTION · route + role context")]
   C -->|"Engineering leader"| D["Function overview<br/>current impact + constraint + priority"]
   C -->|"Team coach"| E["People view<br/>support signals + drill-down"]
@@ -15,7 +18,8 @@ flowchart LR
   H --> I["Action<br/>recommendation + owner + adoption"]
   G --> J["New config version<br/>full deterministic recompute"]
   J --> B
-  class A,B,H,J fn;
+  class K,L,M,B,H,J fn;
+  class A data;
   class C dec;
   class D,E,F,G,I term;
   classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;

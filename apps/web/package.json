@@ -17,8 +17,7 @@
     "test:scoring": "vitest run lib/scoring",
     "db:migrate": "node --env-file=../../.env.local scripts/db-migrate.mjs",
     "db:types": "supabase gen types typescript --local > lib/types/database.generated.ts",
-    "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest",
-    "demo:reset": "node --env-file=../../.env.local scripts/reset-demo.mjs"
+    "inngest:dev": "npx inngest-cli@latest dev -u http://localhost:3000/api/inngest"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
@@ -32,7 +31,7 @@
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
     "date-fns": "^4.1.0",
-    "inngest": "^3.31.0",
+    "inngest": "^3.54.2",
     "next": "^15.1.6",
     "octokit": "^4.1.0",
     "papaparse": "^5.4.1",

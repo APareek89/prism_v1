@@ -15,16 +15,13 @@ oriented. Treat `handoff.md` as the project's memory — a session that doesn't 
 
 ## Hard rules (do not violate)
 - **No dummy/synthetic data — ever.** Only real ingested data. The only DB seed is `index_config` v1.
-  - **Scoped exception (owner-approved, `feat/v3-preview`): the `v3` Postgres schema only.** The v3.0
-    preview runs on deterministic dummy data seeded by `services/ingest/scripts/seed.mjs` into `v3.*`
-    tables (same Supabase project, separate schema). NEVER write synthetic rows to `public.*`. Every
-    v3 UI page carries a "DEMO DATA" banner. Remove/rebuild the whole preview world with
-    `npm run v3:reset` (drops schema v3 cascade → re-migrates → re-seeds; `public.*` untouched).
+  The retired `v3.*` preview and its seed tooling were removed on 2026-07-17. Every product route
+  reads real `public.*` evidence or shows an honest empty state.
 - **Column truth = `supabase/migrations/*.sql`.** Before trusting any query, validate columns against the
   LIVE DB: `select <cols> from public.<table> limit 0` (via `pg` + `SUPABASE_DB_URL`,
   `node --env-file=.env.local`). This bit us repeatedly — subagents guess column names.
-- **DEMO_MODE reads via service-role** (RLS bypassed locally, demo holds all roles); production
-  (`DEMO_MODE=false`) uses the real RLS client. See `lib/db/_base.ts` + `lib/auth/session.ts`.
+- **Authentication is always real Supabase Auth + RLS.** There is no demo-user fallback or service-role
+  page-read bypass. See `lib/db/_base.ts` + `lib/auth/session.ts`.
 - **Determinism boundary:** all numbers come from `lib/scoring` (pure, LLM-free); LangGraph agents in
   `lib/agents` ONLY narrate — never compute a score.
 - **Migrations:** data owns `0001–0021`; automation appends `0030+`. Never redefine existing tables.
@@ -36,4 +33,4 @@ Prism measures its own development. Do work on a branch → PR → merge, and **
 
 ## Run / verify
 `npm run dev` (:3000) · `npm run test` · `npm run typecheck` · `npm run build` ·
-`npm run db:migrate` · `npm run demo:reset` (clean slate) · `npm run inngest:dev` (durable pipeline).
+`npm run db:migrate` · `npm run inngest:dev` (durable pipeline).

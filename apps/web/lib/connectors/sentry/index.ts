@@ -28,7 +28,7 @@ import { mapIssuesToIncidents, resolveIncidentDeploys } from './incidents';
 /** The connector's public surface. status() is keyless-safe and never touches Sentry. */
 export interface SentryConnectorApi {
   status(): ConnectorStatus;
-  /** Persist/refresh the connectors row + (when configured) the self employee. */
+  /** Persist/refresh the connectors row. */
   connect(functionId: string): Promise<void>;
   /** Pull releases + issues and write deploys/incidents. Returns a tally. */
   ingest(functionId: string): Promise<IngestResult>;
@@ -72,7 +72,6 @@ class SentryConnector implements SentryConnectorApi {
       await upsertConnectorRow(functionId, 'not_configured', null);
       return;
     }
-    await ensureSelfEmployee(functionId);
     await upsertConnectorRow(functionId, 'connected', null);
   }
 
@@ -88,7 +87,6 @@ class SentryConnector implements SentryConnectorApi {
 
     await upsertConnectorRow(functionId, 'syncing', null);
     try {
-      await ensureSelfEmployee(functionId);
       const written = await ingestFromSentry(client, functionId, result);
       result.written = written;
       await upsertConnectorRow(functionId, 'connected', null, new Date().toISOString());
@@ -197,7 +195,7 @@ async function loadShaToDeployId(
 }
 
 // ---------------------------------------------------------------------------
-// Connector-row + self-employee bookkeeping (shared with other connectors' intent)
+// Connector-row bookkeeping
 // ---------------------------------------------------------------------------
 
 /** Upsert the per-function connectors row (UNIQUE(function_id, type)). Never throws
@@ -221,38 +219,6 @@ async function upsertConnectorRow(
     await db.from('connectors').upsert(row, { onConflict: 'function_id,type' });
   } catch {
     // Bookkeeping must never break the keyless-boot / degrade-gracefully contract.
-  }
-}
-
-/**
- * Ensure the single demo "self employee" exists for this function (is_demo=true). org
- * = me = team today; identity is multi-employee-ready (github_handle / claude_account_
- * uuid / email) but the self employee anchors the bootstrap. Idempotent: re-running is
- * a no-op once the row exists. Never throws — failure here must not abort ingest.
- */
-async function ensureSelfEmployee(functionId: string): Promise<void> {
-  try {
-    const db = appTable(createAdminClient());
-    const { data } = await db
-      .from('employees')
-      .select('id')
-      .eq('function_id', functionId)
-      .eq('is_demo', true)
-      .limit(1)
-      .maybeSingle();
-    if (data) return;
-
-    await db.from('employees').insert({
-      function_id: functionId,
-      name: 'You',
-      attribution_mode: 'matched',
-      match_status: 'linked',
-      active: true,
-      is_demo: true,
-    });
-  } catch {
-    // The self employee is created lazily across connectors; a race or transient error
-    // must not break the degrade-gracefully contract. The next connect/scan retries.
   }
 }
 

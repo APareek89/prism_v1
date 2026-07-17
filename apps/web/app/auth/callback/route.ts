@@ -8,6 +8,7 @@ import { NextResponse } from 'next/server';
 import { isConfigured } from '@/lib/config/env';
 import { createClient } from '@/lib/supabase/server';
 import { ROUTES } from '@/lib/config/constants';
+import { claimWorkspaceByEmail } from '@/lib/auth/workspace';
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
@@ -25,5 +26,21 @@ export async function GET(request: Request): Promise<Response> {
     return NextResponse.redirect(`${origin}${ROUTES.signIn}?error=auth`);
   }
 
-  return NextResponse.redirect(`${origin}${ROUTES.me}`);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user?.email) {
+    return NextResponse.redirect(`${origin}${ROUTES.signIn}?error=unmatched`);
+  }
+
+  try {
+    const claim = await claimWorkspaceByEmail(user.id, user.email);
+    if (claim.employeeId === null) {
+      return NextResponse.redirect(`${origin}${ROUTES.signIn}?error=unmatched`);
+    }
+  } catch {
+    return NextResponse.redirect(`${origin}${ROUTES.signIn}?error=workspace`);
+  }
+
+  return NextResponse.redirect(`${origin}${ROUTES.me}?welcome=1`);
 }

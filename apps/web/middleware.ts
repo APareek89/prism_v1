@@ -3,8 +3,7 @@
 // Session refresh + route protection. Three invariants:
 //   1. Keyless-safe: if Supabase isn't configured, or any step throws, we pass the
 //      request through unchanged (never 500 a build/boot).
-//   2. DEMO short-circuit: in DEMO_MODE we allow every route through (the dev sign-in
-//      bypass) — RLS still applies once real keys exist.
+//   2. There is no demo bypass: configured deployments require a real session.
 //   3. The matcher EXCLUDES webhook / pipeline / courses / inngest / health / static
 //      so those never carry an auth redirect.
 
@@ -13,13 +12,6 @@ import { NextResponse, type NextRequest } from 'next/server';
 const PUBLIC_PATHS = ['/auth/sign-in', '/auth/callback', '/api/health'];
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
-  // DEMO_MODE (default true) → allow everything through. Read the raw env here because
-  // middleware runs on the edge runtime without the full config module guarantees.
-  const demoMode = process.env.DEMO_MODE !== 'false';
-  if (demoMode) {
-    return NextResponse.next();
-  }
-
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

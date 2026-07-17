@@ -19,7 +19,7 @@
 // skipped without error. Nothing here throws on a missing key.
 //
 // Auth: any authenticated user may test their OWN digest (no admin needed — it only touches
-// the caller's employee). In DEMO_MODE the caller resolves to the is_demo self employee.
+// the caller's real, linked employee).
 
 import { getAuthUser } from '@/lib/auth/session';
 import { renderDigest } from '@/lib/email/render';
