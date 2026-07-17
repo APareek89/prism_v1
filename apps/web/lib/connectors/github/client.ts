@@ -2,7 +2,7 @@
 //
 // GitHub App authentication. The App's private key is provided as GITHUB_APP_PRIVATE_KEY
 // in one of two shapes (architecture / credentials note):
-//   1. BASE64 of a PEM  → base64-decode to '-----BEGIN RSA PRIVATE KEY-----...'
+//   1. BASE64 of a PEM  → base64-decode to a standard RSA private-key block. // # pragma: allowlist secret
 //   2. a raw PEM, possibly with literal `\n` escapes instead of real newlines.
 // We tolerate both. From the App credentials we mint a per-INSTALLATION client that
 // carries an installation access token and exposes REST (`octokit.rest`) + GraphQL
@@ -86,8 +86,8 @@ export function getApp(): App {
     ...(serverEnv.GITHUB_APP_WEBHOOK_SECRET
       ? { webhooks: { secret: serverEnv.GITHUB_APP_WEBHOOK_SECRET } }
       : {}),
-    ...(serverEnv.GITHUB_APP_CLIENT_ID && serverEnv.GITHUB_APP_CLIENT_SECRET
-      ? { oauth: { clientId: serverEnv.GITHUB_APP_CLIENT_ID, clientSecret: serverEnv.GITHUB_APP_CLIENT_SECRET } }
+    ...(serverEnv.GITHUB_APP_CLIENT_ID && serverEnv.GITHUB_APP_CLIENT_SECRET // # pragma: allowlist secret
+      ? { oauth: { clientId: serverEnv.GITHUB_APP_CLIENT_ID, clientSecret: serverEnv.GITHUB_APP_CLIENT_SECRET } } // # pragma: allowlist secret
       : {}),
   });
   return _app;
