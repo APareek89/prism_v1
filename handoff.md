@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 113c82e · branch: `codex/final-handoff` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: f0309f9 · branch: `codex/public-telemetry-endpoints` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -8,20 +8,8 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 
 ## Current state
 
-- ✅ Independent redesign remains complete across Overview, People, member, My workspace, and Index model.
-- ✅ New admin-only `/connect` flow detects GitHub App installations, activates/backfills one, shows selected repo/evidence/team readiness, and redirects install callbacks back to Connect.
-- ✅ Real `APareek89` sync passed: 1 currently selected repo, 22 PRs, 58 commits, 3 active discovered people, no connector errors.
-- ✅ Per-person Codex/Claude Code setup uses hashed 15-minute one-time invites, hashed collector tokens, config backup, OTLP/HTTP JSON, prompt logging off, connection checks, and revocation.
-- ✅ Collector persists only allowlisted session/model/turn/token/cache/prompt-length/success metadata; bodies and unknown attributes are discarded and events are idempotent.
-- ✅ Migration `0034_connect_mvp.sql` is applied to the live DB; no test invites/connections/events/sessions remain. Real public GitHub rows were preserved.
-- ✅ Supabase passwordless sign-in links one auth user to exactly one active GitHub-discovered employee by normalized email; no demo-user/session fallback remains.
-- ✅ `/me` now leads with a personal Codex/Claude Code command, one-time status, refresh, disconnect, and privacy explanation. Admin `/connect` can assign an email and send the Supabase invitation.
-- ✅ All product pages read real `public.*` rows through RLS. The v3 demo UI/API/seed service and live `v3` schema were removed; the live DB has 0 demo employees and 4 active GitHub-discovered employees.
-- ✅ Browser-verified sign-in at 1440px/390px with zero errors/overflow; 294 tests, typecheck, and production build pass; scoring/engine files are untouched.
-- ✅ New private GitHub repo `APareek89/prism_v1`; PR #1 merged to `main`. Render service is live at `https://prism-v1.onrender.com`; health reports production, demo false, DB ok.
-- ✅ Hosted login no longer depends on Supabase redirect allowlisting: Supabase generates/verifies the one-time token and Resend delivers the Prism callback. Unknown emails receive the same public response.
-- ✅ Auth redirects and every generated/consumed telemetry installer use `NEXT_PUBLIC_APP_URL`, not Render's proxy-internal request origin, so neither login nor agent setup can fall through to localhost.
-- ✅ Full hosted flow browser-verified on Render: one-time token lands at `/me`, the Codex command and consumed installer both use `https://prism-v1.onrender.com`, prompt logging stays off, and the console is clean. The test invite/revoked connection were removed, then the newest real login email was accepted for delivery.
+- ✅ Shipped: decision-first real-data UI, GitHub team/evidence sync, exact-email Supabase/Resend login, per-user Codex/Claude metadata-only OTEL, deterministic scoring boundary, no demo rows, private GitHub repo, and Render deployment (see git log and `Learning.MD`).
+- 🔄 Fix ready for deployment: installer and OTLP collector routes accept their own invite/bearer credentials without a browser session; management routes remain Supabase-protected. Local unauthenticated checks return plain-text 410 / JSON 401 rather than HTML redirects; 249 web tests, typecheck, build, and diagrams pass.
 
 ## Product/architecture decisions
 
@@ -33,6 +21,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - 2026-07-17 — Workspace identity claim is exact normalized email only. A successful first real login receives developer plus bootstrap admin; later users receive developer unless explicitly promoted.
 - 2026-07-17 — Supabase Auth owns login identity and one-time tokens. `DIGEST_FROM_EMAIL` remains only the visible sender for optional Resend digest mail.
 - 2026-07-17 — Hosted auth separates authority from transport: Supabase owns identity/tokens/sessions; Resend delivers the login link using `AUTH_FROM_EMAIL`.
+- 2026-07-17 — Machine-to-machine telemetry endpoints are public only at middleware level and authenticate with one-time invite or bearer tokens; management endpoints still require Supabase sessions.
 
 ## Hard boundaries
 
@@ -49,4 +38,4 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - Exact AI-session → repo/branch/PR, verification, context-read, and review-loop evidence still needs the metadata-only Prism Bridge/production adapter.
 - `Loop.MD` remains offered. Full FMEA and paid coaching golden evals require owner approval.
 
-**Session efficiency:** 🎯 ~62% feature · 🔧 ~31% verification/docs/deployment · 🔁 ~7% rework (legacy demo-write audit + lockfile cleanup)
+**Session efficiency:** 🎯 ~35% fix · 🔧 ~35% verification/deployment · 🔁 ~30% rework (authenticated E2E testing missed the unauthenticated shell path)

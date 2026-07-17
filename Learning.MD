@@ -88,3 +88,13 @@
 **Deepest why type:** `environment`
 **Action taken:** Construct auth callback destinations and both stages of telemetry installer generation from the validated `NEXT_PUBLIC_APP_URL` deployment setting.
 **Preventive action:** Hosted auth QA must follow the callback through its final redirect, then generate and inspect a setup command and its installer endpoint for the same public origin.
+
+### 2026-07-17 — Authenticated browser QA hid a broken terminal installer
+
+**Symptom:** Piping the generated Claude Code command to `sh` failed on `<!DOCTYPE html>` because the installer response was the sign-in page.
+**Why 1:** Middleware redirected the installer request to Supabase sign-in before its one-time invite could be checked.
+**Why 2:** The OTLP collector route had the same browser-session gate even though it authenticates with a bearer token.
+**Why 3:** The hosted end-to-end check consumed the invite from an already authenticated browser, so it never exercised the developer terminal's logged-out path.
+**Deepest why type:** `process`
+**Action taken:** Publicly route only the installer and OTLP paths at middleware level, retain their invite/bearer authentication, keep management paths private, and add path-level regression tests.
+**Preventive action:** Every machine-to-machine endpoint must be tested without browser cookies and assert status plus content type before its response is piped to a shell or SDK.
