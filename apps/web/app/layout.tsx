@@ -34,12 +34,12 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Prism — AI-Native Engineering Index',
-  description: 'One light · four signals. Measure and improve the ROI of Claude Code spend.',
+  description: 'Turn AI engineering activity into durable delivery outcomes and clear next actions.',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0d111c',
-  colorScheme: 'dark',
+  themeColor: '#f5f7f4',
+  colorScheme: 'light',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

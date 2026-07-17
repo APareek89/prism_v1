@@ -91,7 +91,7 @@ export function GrowthTab({ developerId, courses, areas, userContext, artifacts 
   }, [done, courses, areas]);
 
   return (
-    <>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* (C) the management-facing evidence strip — fed from v3.user_context */}
       <div className="card">
         <div className="cardhead">
@@ -205,6 +205,6 @@ export function GrowthTab({ developerId, courses, areas, userContext, artifacts 
           })}
         </div>
       </div>
-    </>
+    </div>
   );
 }

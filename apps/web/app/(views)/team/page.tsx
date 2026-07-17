@@ -1,10 +1,6 @@
-// app/(views)/team/page.tsx
-//
-// Team view — the v1 page skeleton on the v3.0 model: per-engineer roster with
-// BOTH indexes (main + harness), sortable, drill-in per member.
-
 import { activePin, teamRows } from '@/lib/v3/read';
 import { TeamTable, type TeamTableRow } from '@/components/v3/TeamTable';
+import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,43 +27,43 @@ export default async function TeamView() {
     recCount: r.recCount,
   }));
 
-  const confs = vm.map((r) => r.mainConfidence).sort((a, b) => a - b);
-  const medianConf = confs.length ? confs[Math.floor(confs.length / 2)]! : 0;
-  const confLabel = medianConf >= 0.75 ? 'High' : medianConf >= 0.55 ? 'Medium' : medianConf >= 0.4 ? 'Low' : 'Insufficient';
+  const published = vm.filter((r) => r.mainScore !== null).length;
+  const workflowPlus = vm.filter((r) => (r.mainScore ?? -1) >= 55).length;
+  const lowSignal = vm.filter((r) => r.mainConfidence < .4).length;
+  const practiceGap = vm.filter((r) => (r.mainScore ?? -1) >= 55 && (r.harnessScore ?? 101) < 50).length;
 
   return (
-    <div className="main">
-      <div className="top">
-        <div className="ttl">
-          <h2>Team view</h2>
-          <p>Per-engineer breakdown across BOTH indexes · coaching signal, not a leaderboard</p>
-        </div>
+    <div className="page">
+      <PageHeader
+        kicker="People · coaching view"
+        title="Find the support that unlocks the team"
+        description="Start with evidence, not rank. Each profile shows where a workflow is constrained and which practice is most likely to help."
+        meta={
+          <>
+            <MetaChip label="Window" value="Trailing 28 days" />
+            <MetaChip label="As of" value={pin.date ?? 'Awaiting compute'} />
+            <MetaChip label="Config" value={`v${pin.version}`} />
+            <MetaChip label="Privacy" value="Coaching signals only" tone="accent" />
+          </>
+        }
+      />
+
+      <div className="team-summary" aria-label="Team summary">
+        <div className="summary-stat"><span>Engineers with a published MAIN index</span><strong>{published}<small className="muted2"> / {vm.length}</small></strong></div>
+        <div className="summary-stat"><span>Workflow or stronger</span><strong>{workflowPlus}</strong></div>
+        <div className="summary-stat"><span>Strong output, practice gap</span><strong>{practiceGap}</strong></div>
+        <div className="summary-stat"><span>Need more signal before coaching</span><strong>{lowSignal}</strong></div>
       </div>
 
-      <div className="daterow">
-        <span className="pill">Window <b>trailing 28d</b></span>
-        <span className="pill">Engineers <b>{vm.length}</b></span>
-        <span className="pill">Config <b>v{pin.version}</b></span>
-        <span className="pill">As-of <b>{pin.date ?? '—'}</b></span>
-        <span className="conf">
-          confidence
-          <span className="bar"><i style={{ width: `${Math.round(medianConf * 100)}%` }} /></span>
-          {confLabel}
-        </span>
-      </div>
-
-      <div className="card">
+      <section className="card">
         <div className="cardhead">
-          <h3>Squad roster — main + harness</h3>
-          <span className="sub">MAIN 15/35/50 over Core-6 · HARNESS separate (12–15) · click a header to sort · drill in for insights</span>
+          <div><span className="page-kicker">Support map</span><h3>People and their current constraint</h3></div>
+          <span className="sub">Alphabetical by default · scores are not performance ratings</span>
         </div>
         <TeamTable rows={vm} />
-      </div>
+      </section>
 
-      <div className="foot">
-        Individual scores carry wide confidence bands and exist for coaching only. The harness
-        index never mixes into the main number — the linkage engine connects them with evidence.
-      </div>
+      <div className="foot">Individual scores carry confidence and evidence context. Use them to improve systems and habits—not to compare human performance.</div>
     </div>
   );
 }

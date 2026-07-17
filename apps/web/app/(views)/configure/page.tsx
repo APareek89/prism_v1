@@ -1,30 +1,31 @@
-// app/(views)/configure/page.tsx
-//
-// Configure — the model rendered FROM the DB. v1 page skeleton:
-// .top header → .daterow pills → the config cards (tables) → .foot.
-
 import { activeConfigVersion, activePin, dataPoints, kpiCatalog } from '@/lib/v3/read';
 import { ConfigureTable } from '@/components/v3/ConfigureTable';
+import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
+import { Icon } from '@/components/ui/Icon';
 
 export const dynamic = 'force-dynamic';
 
-export default async function V3ConfigurePage() {
-  const [catalog, points, active, pin] = await Promise.all([
-    kpiCatalog(), dataPoints(), activeConfigVersion(), activePin(),
-  ]);
+export default async function ConfigurePage() {
+  const [catalog, points, active, pin] = await Promise.all([kpiCatalog(), dataPoints(), activeConfigVersion(), activePin()]);
   return (
-    <div className="main">
-      <div className="top">
-        <div className="ttl">
-          <h2>Configure</h2>
-          <p>The whole model from the database — v3.kpi_catalog ⋈ v3.data_points · v3.0 preview</p>
-        </div>
-      </div>
+    <div className="page">
+      <PageHeader
+        kicker="System · advanced"
+        title="Make the index match your operating model"
+        description="Inspect every input and adjust weights without rewriting history. Saving creates a new version, then recomputes every view together."
+        actions={<span className="button ghost" aria-label="Deterministic scoring boundary"><Icon name="shield" size={16} /> Deterministic boundary</span>}
+        meta={
+          <>
+            <MetaChip label="Active config" value={`v${active.version}`} tone="accent" />
+            <MetaChip label="Last compute" value={pin.date ?? 'Not computed'} />
+            <MetaChip label="Policy" value="Append-only versions" />
+          </>
+        }
+      />
 
-      <div className="daterow">
-        <span className="pill">Active <b>config v{active.version}</b></span>
-        <span className="pill">As-of <b>{pin.date ?? '—'}</b></span>
-        <span className="pill" style={{ color: 'var(--warn)' }}>Data <b>demo</b></span>
+      <div className="note" style={{ marginBottom: 18 }}>
+        <h4>Changing weights changes every published dashboard</h4>
+        <p>Review totals before saving. MAIN and HARNESS each stay at 100%; the two indexes remain separate and are never blended.</p>
       </div>
 
       <ConfigureTable
@@ -36,11 +37,7 @@ export default async function V3ConfigurePage() {
         asOf={pin.date}
       />
 
-      <div className="foot">
-        Deleting a KPI redistributes its weight proportionally across the remaining enabled KPIs of
-        the SAME index (main and harness each always sum to 100). Every save appends a new
-        config version — nothing is ever mutated — and recomputes every dashboard from it.
-      </div>
+      <div className="foot">Every version is auditable. Disabling a KPI redistributes its weight only within the same index; prior configurations remain intact.</div>
     </div>
   );
 }

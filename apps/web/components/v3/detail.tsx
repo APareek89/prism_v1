@@ -31,7 +31,7 @@ const fmt = (n: number | null | undefined) => (n === null || n === undefined ? '
 export function V3IndexHero({ main }: { main: IndexDailyRow | null }) {
   if (!main || main.score === null) {
     return (
-      <div className="card idxcard">
+      <div className="card profile-score-card">
         <div className="eyebrow">Main index · v3.0</div>
         <EmptyState
           title="Awaiting signal"
@@ -41,9 +41,9 @@ export function V3IndexHero({ main }: { main: IndexDailyRow | null }) {
     );
   }
   return (
-    <div className="card idxcard">
+    <div className="card profile-score-card">
       <div>
-        <div className="eyebrow">Main index · v3.0 · usage 15 / efficiency 35 / outcomes 50</div>
+        <div className="eyebrow">Main impact index</div>
         <div className="bignum">
           {main.score.toFixed(1)}
           <span>/100</span>
@@ -56,7 +56,7 @@ export function V3IndexHero({ main }: { main: IndexDailyRow | null }) {
       </div>
       {main.band ? (
         <div className="lvl">
-          Band <b style={{ color: BAND_COLORS[main.band] }}>{main.band}</b>
+          Current band <b style={{ color: BAND_COLORS[main.band] }}>{main.band}</b>
           {' — '}{BAND_BLURBS[main.band]}
         </div>
       ) : null}
@@ -124,7 +124,7 @@ export function KpiTable({ kpis, title, sub }: { kpis: KpiDailyRow[]; title: str
         <h3>{title}</h3>
         {sub ? <span className="sub">{sub}</span> : null}
       </div>
-      <table>
+      <div className="table-scroll"><table>
         <thead>
           <tr><th>KPI</th><th>Raw</th><th>Score</th><th>Signals</th><th>Notes</th></tr>
         </thead>
@@ -146,7 +146,7 @@ export function KpiTable({ kpis, title, sub }: { kpis: KpiDailyRow[]; title: str
             </tr>
           ))}
         </tbody>
-      </table>
+      </table></div>
     </div>
   );
 }

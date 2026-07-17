@@ -20,3 +20,21 @@
 **Deepest why type:** `process`
 **Action taken:** Keep visual verification as a required phase and use the supported standalone browser workflow if the in-app connection remains unavailable.
 **Preventive action:** Attempt the bundled browser first, record the exact failure once, and avoid repeated blind retries.
+
+### 2026-07-17 — Visually hidden table copy widened the mobile page
+
+**Symptom:** The People route measured 537px wide in a 390px viewport even though its table had an internal scroll container.
+**Why 1:** A visually hidden header used absolute positioning without a fixed viewport anchor.
+**Why 2:** Its off-screen box still expanded the document overflow area.
+**Deepest why type:** `css`
+**Action taken:** Anchor `.sr-only` to a fixed one-pixel box and verify every primary route against `documentElement.scrollWidth` at 390px.
+**Preventive action:** Mobile QA must measure document width in addition to inspecting screenshots.
+
+### 2026-07-17 — A 100.5% index total still appeared publishable
+
+**Symptom:** Editing a weight from 7.5 to 8.0 showed MAIN at 100.5/100 but left the publish control enabled.
+**Why 1:** The UI treated any total within 0.51 of 100 as valid.
+**Why 2:** That tolerance was wider than the editor's 0.5-point input step and contradicted the exact-total copy.
+**Deepest why type:** `logic`
+**Action taken:** Require an exact 100 total within floating-point epsilon before presenting publish as available; the deterministic scoring functions remain untouched.
+**Preventive action:** Every editable invariant needs a UI-level negative-path test, not only a happy-path check.

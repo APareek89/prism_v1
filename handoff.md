@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 8a20e558e33c8bcc9fa9040c64322ebdf99f1cc2
+last-synced: f28022a18b65
 branch: `codex/experience-rebuild`
 workspace: `/Users/anandpareek/Documents/Prism_codex`
 
@@ -10,34 +10,30 @@ Rebuild Prism’s UI/UX and end-to-end decision flow in an independent folder wh
 
 ## Current state
 
-- ✅ Shipped before this branch: v3 schema/seed, deterministic engine, Function/Team/My view/Configure, versioned recompute, user-context adoption, and grounded agent coaching (see git history).
-- ✅ Independent local clone created; `.env.local` links to `/Users/anandpareek/Documents/Prism v1/.env.local` and is ignored by git.
-- ✅ Product audit complete. New experience principle: current impact → why → priority action → proof.
-- ✅ Power-coding memory, eval ladder, architecture flow, security baseline, and diagram viewer configured.
-- 🚧 UI rebuild not started. Existing APIs, v3 reads, database schema, and scoring service remain unchanged.
+- ✅ Independent app lives here; `.env.local` links to `/Users/anandpareek/Documents/Prism v1/.env.local` and remains git-ignored.
+- ✅ Rebuilt the shell and all primary v3 journeys around current impact → why → priority action → proof.
+- ✅ Overview is the leader decision center; People is a support map (not a leaderboard); My workspace is private impact/coach/growth; Index model is an advanced, append-only editor.
+- ✅ Light responsive system, accessible SVG icons, mobile navigation, contained tables, empty-state-compatible components, and a compact demo disclosure are in place.
+- ✅ Browser-verified `/function`, `/team`, `/team/diego`, `/me`, growth adoption persistence, and `/configure` at desktop and 390px; zero console errors and no page overflow.
+- ✅ `npm run test` (288 tests), `npm run typecheck`, and `npm run build` pass on Node 22.22.0.
 
 ## Product/architecture decisions
 
-- 2026-07-17 — Keep the monorepo/data architecture unchanged; redesign the web experience only, avoiding schema, service, dependency, and index-calculation changes.
+- 2026-07-17 — Keep the monorepo/data architecture unchanged; redesign the web experience only. No engine, scoring, migration, schema, dependency, or public-data changes were made.
 - 2026-07-17 — Treat the Function view as the leader decision center, Team as a coaching/support view, My view as a private action workspace, and Configure as an advanced model-owner surface.
-- 2026-07-17 — Use the existing project `handoff.md` naming convention instead of introducing a competing `Handoff.MD`.
-- 2026-07-17 — Use diagram files plus the standalone local viewer; do not add a debug tab to the production app. ⚠️ unconfirmed default.
+- 2026-07-17 — Keep MAIN and HARNESS visibly separate; presentation code may prioritize computed evidence but never recalculate it.
+- 2026-07-17 — Invalid weight totals now block publish at exactly 100; this is an editor guard, not a scoring change.
 
 ## Hard boundaries
 
 - `services/engine` owns every score. UI code may only sort, group, label, and prioritize already-computed rows.
 - MAIN and HARNESS stay separate; no dollars/hours-saved claims; synthetic data stays in `v3.*` with visible demo disclosure.
-- Do not modify migrations or public-schema data for this rebuild.
 
-## Verify
+## Gotchas / next
 
-Use Node 22+. Run `npm run test`, `npm run typecheck`, and `npm run build`; then serve one dev server and browser-check `/function`, `/team`, a member profile, `/me?dev=tom`, and `/configure` at desktop and mobile widths.
+- Production build retains the pre-existing Supabase Edge-runtime warning; it completes successfully.
+- The browser persistence check added one allowed adoption row for Tom in the isolated `v3` demo schema; active config remains v5.
+- `Loop.MD` is offered but not enabled. Full FMEA and the paid coaching golden set require owner approval.
+- This clone has no remote, so the branch can be committed locally but cannot open the dogfooding PR until a remote is added.
 
-## Next
-
-1. Implement the new design system and shell.
-2. Rebuild Function and Team/member flows.
-3. Rebuild My view and Configure without changing their mutations.
-4. Run the full checks and visual QA; update this snapshot before the completion checkpoint.
-
-**Session efficiency:** 🎯 ~45% feature · 🔧 ~55% support (audit, workspace safety, and baseline setup) · 🔁 0% rework
+**Session efficiency:** 🎯 ~72% feature · 🔧 ~23% verification/docs · 🔁 ~5% rework (mobile overflow + invalid-total guard)

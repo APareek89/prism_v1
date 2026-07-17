@@ -1,5 +1,5 @@
 # Loop.MD — Prism Codex
-status: waiting_for_first_draft
+status: offered
 
 > AGENT INSTRUCTION — read every session and obey:
 > - When the first end-to-end draft is demo-able, offer to turn on the Loop. Free evals cost no API money; the golden coaching set only runs with explicit approval.
@@ -19,13 +19,13 @@ CI: none in this local-only repository
 
 | # | Input / action | Expected behavior |
 |---|---|---|
-| 1 | (EXAMPLE — replace me) Open `/function` with the v3 dataset available | In ten seconds, the page identifies the squad MAIN index, confidence, strongest constraint, and one priority action; demo status is visible but not dominant. |
-| 2 | (EXAMPLE — replace me) Open `/team`, find an engineer who needs support, then open the profile | The list is framed as coaching—not ranking—and the profile connects score → evidence → recommendation without changing any score. |
-| 3 | (EXAMPLE — replace me) Open `/me?dev=tom` and adopt an available suggestion | The private view separates impact, coaching, and growth; adoption is clearly acknowledged and remains after reload. |
-| 4 | (EXAMPLE — replace me) Open `/configure` and edit a weight without saving | MAIN and HARNESS totals remain separate, invalid totals block save, and no index logic is recomputed until the explicit save action. |
-| 5 | (EXAMPLE — replace me) Inspect every primary route at desktop and mobile widths | No horizontal page overflow, controls remain keyboard reachable, and tables have a usable small-screen treatment. |
-| 6 | (EXAMPLE — replace me) Search visible UI and source for cost claims | No product surface reports dollars or hours saved; measured tokens are the only cost-like unit. |
-| 7 | (EXAMPLE — replace me) Compare MAIN and HARNESS presentations | Harness is always labeled as a separate practice index and is never visually or mathematically folded into MAIN. |
+| 1 | Open `/function` with the v3 dataset available | In ten seconds, the page identifies the squad MAIN index, confidence, strongest constraint, and one priority action; demo status is visible but not dominant. |
+| 2 | Open `/team`, find an engineer who needs support, then open the profile | The list is framed as coaching—not ranking—and the profile connects score → evidence → recommendation without changing any score. |
+| 3 | Open `/me?dev=tom` and adopt an available suggestion | The private view separates impact, coaching, and growth; adoption is clearly acknowledged and remains after reload. |
+| 4 | Open `/configure` and edit a weight without saving | MAIN and HARNESS totals remain separate, invalid totals block save, and no index logic is recomputed until the explicit save action. |
+| 5 | Inspect every primary route at desktop and mobile widths | No horizontal page overflow, controls remain keyboard reachable, and tables have a usable small-screen treatment. |
+| 6 | Search visible UI and source for cost claims | No product surface reports dollars or hours saved; measured tokens are the only cost-like unit. |
+| 7 | Compare MAIN and HARNESS presentations | Harness is always labeled as a separate practice index and is never visually or mathematically folded into MAIN. |
 
 ## Golden set — paid coaching quality checks
 
@@ -44,3 +44,4 @@ CI: none in this local-only repository
 
 | Date | Hypothesis | Result | Cost note |
 |---|---|---|---|
+| 2026-07-17 | A decision-first experience can improve comprehension without changing computed indexes. | Rung 1 passed; free behaviors 1–7 passed through browser and source checks. | $0 |
