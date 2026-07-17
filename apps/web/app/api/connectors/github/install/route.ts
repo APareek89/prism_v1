@@ -9,7 +9,7 @@
 //                               installation can see, connect the connector (persist
 //                               installation_id + repo_ids onto connectors.config_jsonb +
 //                               functions.repo_ids, ensure the self employee, sync org
-//                               members), kick a backfill, then 302 back to /admin.
+//                               members), kick a backfill, then 302 back to /connect.
 //   POST (json { installationId, repoIds? }) → same connect+backfill, JSON response (for
 //                               a programmatic / fetch-driven connect).
 //
@@ -34,10 +34,9 @@ import {
 export const dynamic = 'force-dynamic';
 
 /** Where to send the user back to after the install callback. */
-function adminUrl(req: Request, params: Record<string, string>): string {
+function connectUrl(req: Request, params: Record<string, string>): string {
   const base = process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
-  const url = new URL('/admin', base);
-  url.hash = 'connectors';
+  const url = new URL('/connect', base);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
   return url.toString();
 }
@@ -94,17 +93,17 @@ export async function GET(req: Request): Promise<Response> {
   // ── install callback (write path) — admin-gated ────────────────────────────
   const user = await getAuthUser();
   if (!user || !isAdmin(user)) {
-    return Response.redirect(adminUrl(req, { github: 'forbidden' }), 302);
+    return Response.redirect(connectUrl(req, { github: 'forbidden' }), 302);
   }
 
   const installationId = Number.parseInt(installationIdRaw, 10);
   if (!Number.isFinite(installationId)) {
-    return Response.redirect(adminUrl(req, { github: 'bad_installation_id' }), 302);
+    return Response.redirect(connectUrl(req, { github: 'bad_installation_id' }), 302);
   }
 
   const functionId = await resolveBootstrapFunctionId();
   if (!functionId) {
-    return Response.redirect(adminUrl(req, { github: 'no_function' }), 302);
+    return Response.redirect(connectUrl(req, { github: 'no_function' }), 302);
   }
 
   try {
@@ -112,12 +111,12 @@ export async function GET(req: Request): Promise<Response> {
     const connector = new GitHubConnector(functionId);
     const status = await connector.connect(installationId, repoIds);
     if (status !== 'connected') {
-      return Response.redirect(adminUrl(req, { github: status }), 302);
+      return Response.redirect(connectUrl(req, { github: status }), 302);
     }
     // Kick a backfill (PRs/commits/reverts). It marks 'syncing' then 'connected'.
     const summary = await connector.backfill();
     return Response.redirect(
-      adminUrl(req, {
+      connectUrl(req, {
         github: 'connected',
         repos: String(repoIds.length),
         prs: String(summary.prsUpserted),
@@ -125,7 +124,7 @@ export async function GET(req: Request): Promise<Response> {
       302,
     );
   } catch (e) {
-    return Response.redirect(adminUrl(req, { github: 'error', detail: errMessage(e).slice(0, 120) }), 302);
+    return Response.redirect(connectUrl(req, { github: 'error', detail: errMessage(e).slice(0, 120) }), 302);
   }
 }
 

@@ -38,3 +38,13 @@
 **Deepest why type:** `logic`
 **Action taken:** Require an exact 100 total within floating-point epsilon before presenting publish as available; the deterministic scoring functions remain untouched.
 **Preventive action:** Every editable invariant needs a UI-level negative-path test, not only a happy-path check.
+
+### 2026-07-17 — Organization connection and developer consent are different scopes
+
+**Symptom:** A single “Connect LLM” concept suggested Prism could pull every organization member’s local Codex or Claude Code data after the GitHub App was installed.
+**Why 1:** GitHub Apps run server-to-server for selected repositories, while coding-agent telemetry originates on each developer’s machine.
+**Why 2:** A browser cannot safely rewrite every developer’s user-level tool configuration.
+**Why 3:** Identity, consent, and ingestion were being treated as one connection instead of three explicit steps.
+**Deepest why type:** `design`
+**Action taken:** Add a Connect flow that discovers the team from GitHub, issues a hashed one-time personal invitation, backs up and configures the selected local tool, and maps its collector token back to that exact employee.
+**Preventive action:** Every new connector must document its authorization scope, identity key, privacy boundary, and the first observable proof that data is flowing.

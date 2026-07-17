@@ -15,6 +15,7 @@ out/
 # build / test
 coverage/
 output/
+.playwright-cli/
 .inngest/
 next-env.d.ts
 *.tsbuildinfo

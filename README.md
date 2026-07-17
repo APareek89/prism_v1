@@ -7,6 +7,7 @@ Prism shows whether AI-assisted engineering is creating durable value, explains 
 - **Overview** — the function-level outcome, confidence, limiting dimension, linkage evidence, and highest-leverage action.
 - **People** — an alphabetical support map for coaching, never a productivity leaderboard.
 - **My workspace** — a private developer view for impact, live coaching, and tracked growth actions.
+- **Connect** — activate a GitHub App installation, discover the team, and issue per-person Codex or Claude Code OTLP setup commands.
 - **Index model** — an advanced, append-only configuration surface for MAIN and HARNESS weights.
 
 MAIN measures durable outcomes. HARNESS measures compounding engineering practices and always remains a separate index. Every score comes from `services/engine`; agents may narrate deterministic evidence but cannot compute or change a score.
@@ -27,6 +28,10 @@ npm run dev                  # http://localhost:3000
 ```
 
 Use `npm run v3:reset` to rebuild only the isolated v3 preview world. It does not touch `public.*`.
+
+For the live-input MVP, open `http://localhost:3000/connect`. Select an existing GitHub App installation, then click Connect beside your own Codex or Claude Code identity and run the one-time command. The installer backs up the user-level config, keeps prompt logging off, and sends a connection check; start a fresh tool session afterward to produce telemetry.
+
+Live GitHub and OTLP rows currently land in `public.*` and are shown only in Connect. The decision views continue to use the isolated `v3.*` preview until the production ingestion adapter is promoted, so real employees are never mixed with demo scores.
 
 See [`handoff.md`](handoff.md) for the current state and [`docs/architecture/README.md`](docs/architecture/README.md) for the architecture index.
 

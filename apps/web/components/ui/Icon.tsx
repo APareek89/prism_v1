@@ -4,6 +4,7 @@ export type IconName =
   | 'overview'
   | 'people'
   | 'sparkles'
+  | 'plug'
   | 'sliders'
   | 'arrow-right'
   | 'arrow-left'
@@ -22,6 +23,7 @@ const paths: Record<IconName, ReactNode> = {
   overview: <><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="3" y="14" width="7" height="7" rx="2"/><rect x="14" y="14" width="7" height="7" rx="2"/></>,
   people: <><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></>,
   sparkles: <><path d="m12 3-1.1 3.2a7 7 0 0 1-4.4 4.4L3 12l3.5 1.4a7 7 0 0 1 4.4 4.4L12 21l1.1-3.2a7 7 0 0 1 4.4-4.4L21 12l-3.5-1.4a7 7 0 0 1-4.4-4.4L12 3Z"/></>,
+  plug: <><path d="M12 22v-5"/><path d="M9 8V2M15 8V2"/><path d="M18 8v4a6 6 0 0 1-12 0V8Z"/><path d="M4 8h16"/></>,
   sliders: <><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/></>,
   'arrow-right': <><path d="M5 12h14M13 6l6 6-6 6"/></>,
   'arrow-left': <><path d="M19 12H5M11 18l-6-6 6-6"/></>,
