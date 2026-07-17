@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 24793b8 · branch: `codex/hosted-auth` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: e02b546 · branch: `codex/render-origin-fix` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -20,6 +20,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - ✅ Browser-verified sign-in at 1440px/390px with zero errors/overflow; 294 tests, typecheck, and production build pass; scoring/engine files are untouched.
 - ✅ New private GitHub repo `APareek89/prism_v1`; PR #1 merged to `main`. Render service is live at `https://prism-v1.onrender.com`; health reports production, demo false, DB ok.
 - ✅ Hosted login no longer depends on Supabase redirect allowlisting: Supabase generates/verifies the one-time token and Resend delivers the Prism callback. Unknown emails receive the same public response.
+- ✅ Auth callback redirects use `NEXT_PUBLIC_APP_URL`, not Render's proxy-internal request origin, so successful hosted login cannot fall through to localhost.
 
 ## Product/architecture decisions
 

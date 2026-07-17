@@ -78,3 +78,13 @@
 **Deepest why type:** `environment`
 **Action taken:** Keep Supabase as token/session authority, but deliver a Resend email whose link points directly to Prism and exchanges Supabase's hashed one-time token at `/auth/callback`.
 **Preventive action:** Every hosted passwordless flow must test the actual received link, not stop at “email request returned 200.”
+
+### 2026-07-17 — The edge proxy's request origin was not the browser origin
+
+**Symptom:** Prism successfully verified the hosted one-time token, then its own callback issued a 307 redirect to `localhost`.
+**Why 1:** The callback built its destination from `request.url`.
+**Why 2:** Render terminates the public request at a proxy and forwards an internal localhost origin to the Next.js service.
+**Why 3:** Redirect construction assumed the application server could always infer the canonical external origin from an inbound request.
+**Deepest why type:** `environment`
+**Action taken:** Construct all auth callback destinations from the validated `NEXT_PUBLIC_APP_URL` deployment setting.
+**Preventive action:** Hosted auth QA must follow the callback through its final redirect and assert the final public origin, not only token verification.
