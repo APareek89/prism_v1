@@ -29,7 +29,7 @@ npm run dev                  # http://localhost:3000
 
 For the live-input MVP, an administrator opens `/connect`, activates the GitHub App installation, assigns each discovered developer a work email, and sends a login invitation. The developer signs in, lands on `/me`, chooses Codex or Claude Code, and copies the fresh 15-minute setup command into a terminal. The installer backs up user configuration, keeps prompt logging off, and sends metadata-only OTLP to Prism.
 
-Supabase Auth sends login and invitation emails. Prism’s optional Resend digest sender is separate: `DIGEST_FROM_EMAIL` is the visible From address for digest mail, not a credential and not the Supabase login sender.
+Supabase Auth creates and verifies login tokens. In a hosted environment Prism can deliver its own callback link through Resend using `AUTH_FROM_EMAIL`; the optional digest sender is separate. `DIGEST_FROM_EMAIL` is the visible From address for digest mail—not a credential and not the login sender.
 
 See [`handoff.md`](handoff.md) for the current state and [`docs/architecture/README.md`](docs/architecture/README.md) for the architecture index.
 

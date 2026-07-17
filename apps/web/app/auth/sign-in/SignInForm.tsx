@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { ROUTES } from '@/lib/config/constants';
 
 export function SignInForm({
   initialEmail = '',
@@ -19,16 +18,15 @@ export function SignInForm({
     setStatus('sending');
     setMessage(null);
     try {
-      const { createClient } = await import('@/lib/supabase/browser');
-      const supabase = createClient();
-      const redirectTo = `${window.location.origin}${ROUTES.authCallback}`;
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: { emailRedirectTo: redirectTo, shouldCreateUser: true },
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email }),
       });
-      if (error) throw error;
+      const body = await response.json();
+      if (!response.ok || !body.ok) throw new Error(body.error ?? 'Could not send the magic link.');
       setStatus('sent');
-      setMessage(`Magic link sent to ${email}. Open it in this browser to continue.`);
+      setMessage('If this email is linked to Prism, its one-time sign-in link is on the way.');
     } catch (error) {
       setStatus('error');
       setMessage(error instanceof Error ? error.message : 'Could not send the magic link.');

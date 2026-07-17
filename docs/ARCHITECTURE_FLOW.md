@@ -30,6 +30,7 @@ flowchart LR
 - Every product route reads real `public.*` rows through the authenticated RLS client; connector and pipeline writes use narrowly scoped service-role paths.
 - GitHub installation is organization/account-level. Codex and Claude Code are connected per person through a hashed one-time invite and a personal collector token.
 - A login claims only an active, unclaimed employee whose normalized email exactly matches the Supabase user. The first linked real user bootstraps the initial admin role.
+- Hosted login uses a Supabase-generated single-use token delivered by Resend to a Prism callback; local fallback uses Supabase email delivery. Supabase remains the session authority in both cases.
 - The OTLP boundary allowlists session/model/token/turn/prompt-length/success metadata and discards bodies plus unknown attributes before persistence.
 - The web app may derive presentation labels, counts, sorting, and prioritization from already-computed rows; it may not recalculate scores.
 - The agent coaching flow consumes deterministic facts and produces grounded narrative only.
