@@ -8,8 +8,7 @@
 //      so those never carry an auth redirect.
 
 import { NextResponse, type NextRequest } from 'next/server';
-
-const PUBLIC_PATHS = ['/auth/sign-in', '/auth/callback', '/api/auth/magic-link', '/api/health'];
+import { isPublicPath } from '@/lib/auth/public-paths';
 
 export async function middleware(request: NextRequest): Promise<NextResponse> {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -21,7 +20,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
   const { pathname } = request.nextUrl;
-  const isPublic = PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const isPublic = isPublicPath(pathname);
 
   let response = NextResponse.next({ request });
 
