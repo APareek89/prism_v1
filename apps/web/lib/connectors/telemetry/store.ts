@@ -330,6 +330,80 @@ export interface ConnectOverview {
   sessionCounts: { codex: number; claudeCode: number };
 }
 
+export interface PersonalTelemetryProviderState {
+  status: string | null;
+  lastSeenAt: string | null;
+  sessionCount: number;
+}
+
+export interface PersonalTelemetryOverview {
+  schemaReady: boolean;
+  employeeName: string;
+  email: string | null;
+  codex: PersonalTelemetryProviderState;
+  claudeCode: PersonalTelemetryProviderState;
+}
+
+export async function getPersonalTelemetryOverview(args: {
+  functionId: string;
+  employeeId: string;
+}): Promise<PersonalTelemetryOverview> {
+  const empty: PersonalTelemetryOverview = {
+    schemaReady: false,
+    employeeName: 'Your workspace',
+    email: null,
+    codex: { status: null, lastSeenAt: null, sessionCount: 0 },
+    claudeCode: { status: null, lastSeenAt: null, sessionCount: 0 },
+  };
+
+  try {
+    const [employee, connections, sessions] = await Promise.all([
+      db().query<{ name: string; email: string | null }>(
+        `select name, email::text
+         from public.employees
+         where id = $1 and function_id = $2 and active = true
+         limit 1`,
+        [args.employeeId, args.functionId],
+      ),
+      db().query<{ provider: TelemetryProvider; status: string; last_seen_at: string | null }>(
+        `select provider, status, last_seen_at::text
+         from public.telemetry_connections
+         where employee_id = $1 and function_id = $2`,
+        [args.employeeId, args.functionId],
+      ),
+      db().query<{ provider: string; count: string }>(
+        `select provider, count(*)::text as count
+         from public.cc_sessions
+         where employee_id = $1 and function_id = $2 and connection_id is not null
+         group by provider`,
+        [args.employeeId, args.functionId],
+      ),
+    ]);
+    const employeeRow = employee.rows[0];
+    if (!employeeRow) return empty;
+
+    const overview: PersonalTelemetryOverview = {
+      schemaReady: true,
+      employeeName: employeeRow.name,
+      email: employeeRow.email,
+      codex: { status: null, lastSeenAt: null, sessionCount: 0 },
+      claudeCode: { status: null, lastSeenAt: null, sessionCount: 0 },
+    };
+    for (const connection of connections.rows) {
+      const target = connection.provider === 'codex' ? overview.codex : overview.claudeCode;
+      target.status = connection.status;
+      target.lastSeenAt = connection.last_seen_at;
+    }
+    for (const row of sessions.rows) {
+      if (row.provider === 'codex') overview.codex.sessionCount = Number(row.count);
+      if (row.provider === 'claude_code') overview.claudeCode.sessionCount = Number(row.count);
+    }
+    return overview;
+  } catch {
+    return empty;
+  }
+}
+
 export async function getConnectOverview(functionId: string): Promise<ConnectOverview> {
   const empty: ConnectOverview = {
     schemaReady: false,

@@ -17,6 +17,8 @@ export type IconName =
   | 'bolt'
   | 'book'
   | 'refresh'
+  | 'terminal'
+  | 'copy'
   | 'info';
 
 const paths: Record<IconName, ReactNode> = {
@@ -36,6 +38,8 @@ const paths: Record<IconName, ReactNode> = {
   bolt: <><path d="m13 2-9 12h8l-1 8 9-12h-8l1-8Z"/></>,
   book: <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></>,
   refresh: <><path d="M20 6v6h-6"/><path d="M4 18v-6h6"/><path d="M18.5 9a7 7 0 0 0-11.7-2.6L4 9M20 15l-2.8 2.6A7 7 0 0 1 5.5 15"/></>,
+  terminal: <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M13 15h4"/></>,
+  copy: <><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></>,
   info: <><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></>,
 };
 

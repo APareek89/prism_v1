@@ -4,11 +4,8 @@
 //   • JSON Response builders (ok / badRequest / serverError);
 //   • bootstrap-function resolution — the REAL functions.id the connectors write to.
 //
-// Why a dedicated function resolver: getAuthUser() in DEMO_MODE returns a synthetic
-// functionId ('demo-function') that is NOT a real row. Connectors WRITE (service-role),
-// so they must target the actual bootstrap `functions` row. We resolve it from the live
-// DB via the admin client (the single function today; org = me = team), falling back to
-// the auth user's functionId only when it's a real uuid-bearing row.
+// Connectors WRITE with the service role, so they resolve the persisted function row
+// directly instead of relying on request-scoped RLS reads.
 //
 // SERVER-ONLY: imports the service-role admin client. Never bundle into client code.
 
@@ -52,8 +49,8 @@ export function notConfigured(detail: string): Response {
 /**
  * Resolve the REAL bootstrap function id the connectors should write to. Today there is
  * exactly one `functions` row (org = me = team); we read it via the service-role client
- * so the answer is the live uuid, not the demo placeholder. Returns null only when
- * Supabase is unconfigured or the table is empty.
+ * so the answer is always a live database id. Returns null only when Supabase is
+ * unconfigured or the table is empty.
  */
 export async function resolveBootstrapFunctionId(): Promise<string | null> {
   if (!isConfigured('supabase')) return null;

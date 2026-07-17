@@ -21,15 +21,15 @@ export type Capability =
   | 'manage_connectors'
   | 'run_pipeline';
 
-/** The resolved current employee bound to the JWT (or the synthetic demo user). */
+/** The resolved current employee bound to a real Supabase JWT. */
 export interface AuthUser {
-  /** auth.users id; synthetic in DEMO_MODE-without-session. */
+  /** auth.users id. */
   userId: string;
   employeeId: string;
   functionId: string;
   displayName: string;
   email: string | null;
   roles: AppRole[];
-  /** true when this is the in-memory demo context (no DB / no session). */
+  /** Retained for compatibility; always false in the real-user application. */
   isDemo: boolean;
 }

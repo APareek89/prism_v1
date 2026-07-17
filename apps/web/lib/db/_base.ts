@@ -21,9 +21,7 @@
 // direct dependency here; the next/headers transitive import enforces the boundary.
 
 import { appTable, createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { isConfigured } from '@/lib/config/env';
-import { isDemoMode } from '@/lib/config/flags';
 import { getAuthUser } from '@/lib/auth/session';
 import type { AuthUser } from '@/lib/types';
 import { DIMENSION_HUES } from '@/app/tokens';
@@ -68,14 +66,8 @@ export interface DbReadClient {
  * `npm run db:types` runs). Each call constructs a per-request client (cookies/JWT).
  */
 export async function db(): Promise<DbReadClient> {
-  // Dev bypass + real RLS (architecture §0.7): in DEMO_MODE there is no real Supabase
-  // auth session, so the RLS client (anon, auth.uid() null) is denied by every policy.
-  // The demo is a single user holding all roles locally, so reads go through the
-  // service-role client (bypasses RLS) — there is no cross-user boundary to protect.
-  // Production (DEMO_MODE off) uses the real RLS client so policies are enforced.
-  if (isDemoMode() && isConfigured('supabase')) {
-    return createAdminClient() as unknown as DbReadClient;
-  }
+  // Real-user-only: every page read uses the caller's Supabase session and RLS.
+  // Connector ingestion/pipeline modules own their explicit service-role paths.
   const supabase = await createClient();
   return appTable(supabase) as unknown as DbReadClient;
 }

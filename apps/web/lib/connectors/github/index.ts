@@ -7,9 +7,10 @@
 //     (architecture §5): ingestGitHub, backfillRepo, handleGitHubWebhook.
 //
 // It owns the `connectors` row (type='github') health + config via the shared
-// lib/connectors/status helpers, ensures the "self employee" on connect via the
+// lib/connectors/status helpers, provisions the real installation owner via the
 // onboarding service, and orchestrates backfill.ts + org-sync.ts + the AI-line capture
-// in lib/connectors/blame.
+// in lib/connectors/blame. Team members are always provisioned from real GitHub
+// identities; this connector never creates a placeholder employee.
 //
 // KEYLESS-SAFE: status() returns 'not_configured' and writes nothing when the App env is
 // absent; nothing throws at import. All writes go through the service-role admin client.
@@ -24,7 +25,7 @@ import {
   upsertConfig,
   touchLastSync,
 } from '@/lib/connectors/status';
-import { ensureSelfEmployee } from '@/lib/onboarding/provision';
+import { provisionEmployee } from '@/lib/onboarding/provision';
 import { adminDb } from './db';
 import {
   getInstallationOctokit,
@@ -101,12 +102,12 @@ export class GitHubConnector {
       // non-fatal: connector config still records the repos.
     }
 
-    // Ensure the self employee exists (created on first connect).
+    // Provision the installation owner from the real GitHub identity.
     try {
       const me = await this.discoverSelfIdentity(octokit);
-      await ensureSelfEmployee({
+      await provisionEmployee({
         functionId: this.functionId,
-        name: me.name ?? undefined,
+        name: me.name ?? me.githubHandle ?? 'GitHub user',
         githubHandle: me.githubHandle,
       });
     } catch {
@@ -259,7 +260,7 @@ export class GitHubConnector {
     }
   }
 
-  /** Best-effort self identity from the installation account (for the self employee). */
+  /** Best-effort real identity from the installation account. */
   private async discoverSelfIdentity(
     octokit: Octokit,
   ): Promise<{ name: string | null; githubHandle: string | null; email: string | null }> {

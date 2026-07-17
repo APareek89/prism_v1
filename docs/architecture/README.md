@@ -15,6 +15,7 @@ Start here to navigate the design + build docs.
 | [`../reference/prism_dashboard.html`](../reference/prism_dashboard.html) | The approved pixel design the UI ports |
 
 ## The one-line mental model
-Deterministic scoring engine (`lib/scoring`, LLM-free) turns real connector data into
-`index_daily`/`kpi_daily`; LangGraph agents (`lib/agents`) narrate those numbers (never
-compute them); the Inngest pipeline runs the daily loop; the four views render it.
+GitHub App discovery creates the real roster; Supabase Auth links each login to exactly
+one employee; per-user OTEL contributes metadata-only AI-session evidence. The LLM-free
+scoring engine turns those real rows into `index_daily`/`kpi_daily`; agents narrate but
+never compute scores, and missing evidence remains visibly insufficient.

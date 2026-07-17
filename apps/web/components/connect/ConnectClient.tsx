@@ -58,8 +58,11 @@ export function ConnectClient({
   const [notice, setNotice] = useState<string | null>(null);
   const [setup, setSetup] = useState<SetupCommand | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emails, setEmails] = useState<Record<string, string>>(() =>
+    Object.fromEntries(overview.employees.map((employee) => [employee.id, employee.email ?? ''])),
+  );
   const currentEmployee = useMemo(
-    () => overview.employees.find((employee) => employee.id === currentEmployeeId) ?? overview.employees.find((employee) => employee.isDemo) ?? null,
+    () => overview.employees.find((employee) => employee.id === currentEmployeeId) ?? null,
     [overview.employees, currentEmployeeId],
   );
 
@@ -122,6 +125,31 @@ export function ConnectClient({
     }
   }
 
+  async function sendWorkspaceInvite(employeeId: string, employeeName: string) {
+    const email = emails[employeeId]?.trim() ?? '';
+    if (!email) {
+      setNotice(`Add ${employeeName}'s work email before sending an invitation.`);
+      return;
+    }
+    setWorking(`email-${employeeId}`);
+    setNotice(null);
+    try {
+      const response = await fetch('/api/connect/telemetry/email-invites', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ employeeId, email }),
+      });
+      const body = await response.json();
+      if (!response.ok || !body.ok) throw new Error(body.error ?? 'Could not send invitation');
+      setNotice(body.detail ?? `Workspace invitation sent to ${email}.`);
+      router.refresh();
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not send workspace invitation');
+    } finally {
+      setWorking(null);
+    }
+  }
+
   async function copyCommand() {
     if (!setup) return;
     await navigator.clipboard.writeText(setup.command);
@@ -179,7 +207,7 @@ export function ConnectClient({
         <div className="step-number">2</div>
         <div className="step-content">
           <div className="step-heading">
-            <div><span>Identity and invitations</span><h2>Confirm the team Prism discovered</h2><p>GitHub handles are the identity anchor. Email is optional for tonight; a setup command can be copied directly for any person.</p></div>
+            <div><span>Identity and invitations</span><h2>Give every real user a way into their workspace</h2><p>Send a Supabase login invitation by email, or create the personal setup command directly. Both paths resolve to the same GitHub-discovered employee.</p></div>
             <span className="count-badge">{overview.employees.length} people</span>
           </div>
           <div className="team-connect-list">
@@ -187,7 +215,24 @@ export function ConnectClient({
               <article className={`team-connect-row ${employee.id === currentEmployee?.id ? 'is-you' : ''}`} key={employee.id}>
                 <div className="member-identity">
                   <span className="avatar">{employee.name.slice(0, 2).toUpperCase()}</span>
-                  <span><strong>{employee.name}{employee.id === currentEmployee?.id ? ' · you' : ''}</strong><small>@{employee.githubHandle ?? 'unmatched'} · {employee.email ?? 'no public email'}</small></span>
+                  <span><strong>{employee.name}{employee.id === currentEmployee?.id ? ' · you' : ''}</strong><small>@{employee.githubHandle ?? 'unmatched'}</small></span>
+                </div>
+                <div className="workspace-invite">
+                  <label htmlFor={`email-${employee.id}`}>Workspace email</label>
+                  <div>
+                    <input
+                      id={`email-${employee.id}`}
+                      className="text-input"
+                      type="email"
+                      value={emails[employee.id] ?? ''}
+                      placeholder="name@company.com"
+                      onChange={(event) => setEmails((current) => ({ ...current, [employee.id]: event.target.value }))}
+                    />
+                    <button className="button" disabled={working !== null} onClick={() => sendWorkspaceInvite(employee.id, employee.name)}>
+                      {working === `email-${employee.id}` ? 'Sending…' : 'Email login'}
+                    </button>
+                  </div>
+                  <small>Sent by Supabase Auth. The command appears after sign-in.</small>
                 </div>
                 <div className="tool-connection">
                   <span><b>Codex</b><ConnectionState status={employee.codexStatus} lastSeen={employee.codexLastSeenAt} /></span>
@@ -213,11 +258,10 @@ export function ConnectClient({
         <div className="step-number">3</div>
         <div className="step-content">
           <div className="step-heading">
-            <div><span>Data readiness</span><h2>Know exactly what is flowing</h2><p>Tonight’s collector captures session identity, model, turn counts, token counts, prompt length, and tool success metadata. Missing repo/PR linkage remains insufficient—not false.</p></div>
+            <div><span>Data readiness</span><h2>Know exactly what is flowing</h2><p>The collector captures session identity, model, turn counts, token counts, prompt length, and tool success metadata. Missing repo/PR linkage remains insufficient—not false.</p></div>
           </div>
           <div className="readiness-grid">
             <div><span>GitHub evidence</span><strong>{overview.github.prCount + overview.github.commitCount}</strong><small>PR + commit rows</small></div>
-            <div><span>Codex sessions</span><strong>{overview.sessionCounts.codex}</strong><small>From personal OTEL</small></div>
             <div><span>Claude sessions</span><strong>{overview.sessionCounts.claudeCode}</strong><small>From personal OTEL</small></div>
             <div><span>Exact AI → PR link</span><strong>Pending</strong><small>Needs Prism Bridge metadata</small></div>
           </div>

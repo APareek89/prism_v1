@@ -42,11 +42,7 @@ const serverSchema = z.object({
   DEMO_MODE: z
     .string()
     .optional()
-    .transform((v) => v === undefined || v === '' || v === 'true'),
-  // Accept empty string (the .env template ships it blank) or a valid email.
-  DEMO_USER_EMAIL: z
-    .union([z.string().email(), z.literal('')])
-    .optional(),
+    .transform((v) => v === 'true'),
 
   // Supabase (the only "required when used" group)
   NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),

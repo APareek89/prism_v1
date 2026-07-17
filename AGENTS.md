@@ -12,7 +12,7 @@ Prism is the AI-Native Engineering Index: a Next.js + Supabase product that meas
 ## Hard boundaries
 
 - Never change index calculations unless the owner explicitly requests it. `services/engine` is the deterministic source of truth; agents narrate but never calculate scores.
-- Never write synthetic rows to `public.*`. The owner-approved preview data lives only in `v3.*`, and every page must identify it as demo data.
+- Never write or display synthetic product data. The retired `v3.*` preview was removed on 2026-07-17; all product routes use real `public.*` evidence or honest empty states.
 - Validate database columns against migrations and the live database before adding or changing a query.
 - Keep the MAIN and HARNESS indexes separate in both logic and presentation.
 - Never show estimated dollar cost; the product reports measured tokens only.
@@ -22,7 +22,7 @@ Prism is the AI-Native Engineering Index: a Next.js + Supabase product that meas
 
 - Work on a branch, update `handoff.md` before every checkpoint commit and at the end of each phase, and keep a `Co-authored-by: Codex <codex@openai.com>` trailer.
 - Use Node 22 or newer. Run `npm run test`, `npm run typecheck`, and `npm run build` before handoff.
-- Verify the primary UI flows in a real browser and inspect the rendered result.
+- Verify the primary UI flows in a real browser and inspect the rendered result. Authentication is always a real Supabase session; there is no demo-user bypass.
 
 ## Power Coding (auto — do not remove without asking the user)
 

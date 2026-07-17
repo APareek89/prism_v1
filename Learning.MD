@@ -48,3 +48,23 @@
 **Deepest why type:** `design`
 **Action taken:** Add a Connect flow that discovers the team from GitHub, issues a hashed one-time personal invitation, backs up and configures the selected local tool, and maps its collector token back to that exact employee.
 **Preventive action:** Every new connector must document its authorization scope, identity key, privacy boundary, and the first observable proof that data is flowing.
+
+### 2026-07-17 — A demo label was not the full demo-data boundary
+
+**Symptom:** Removing the visible v3 preview still left legacy pipeline and local-Claude paths able to create an `is_demo` employee.
+**Why 1:** Demo behavior existed in ingestion and roster bootstrapping as well as UI routes.
+**Why 2:** The legacy single-user connector forced a placeholder employee so the scorer always had at least one member.
+**Why 3:** The empty-roster case had been treated as a setup failure instead of an honest no-data state.
+**Deepest why type:** `architecture`
+**Action taken:** Remove the v3 routes/schema/seed tooling, delete demo-user auth fallbacks, stop automatic employee creation in every connector and pipeline path, and leave identity-less local sessions unbound.
+**Preventive action:** A real-only audit must search all write paths for placeholder creation and verify the live database has zero demo employees—not merely inspect route copy.
+
+### 2026-07-17 — Team login needs an exact identity bridge
+
+**Symptom:** A Supabase login alone could not identify which GitHub-discovered employee should receive the coding-agent telemetry command.
+**Why 1:** GitHub handles and Supabase user IDs belong to different identity systems.
+**Why 2:** Automatically matching on display name would be ambiguous and unsafe.
+**Why 3:** The product had invitation tokens but no durable auth-user-to-employee claim rule.
+**Deepest why type:** `design`
+**Action taken:** Administrators assign a work email to the discovered employee; callback claims only one active, unclaimed, exact normalized-email match and then applies developer/bootstrap-admin roles.
+**Preventive action:** Every new sign-in method must define a unique claim key, conflict behavior, role bootstrap, and unmatched-user failure state before it can expose personal data.

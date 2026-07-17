@@ -19,14 +19,14 @@ CI: none in this local-only repository
 
 | # | Input / action | Expected behavior |
 |---|---|---|
-| 1 | Open `/function` with the v3 dataset available | In ten seconds, the page identifies the squad MAIN index, confidence, strongest constraint, and one priority action; demo status is visible but not dominant. |
+| 1 | Open `/function` after signing in with a linked real employee | In ten seconds, the page identifies available real evidence and confidence; missing evidence is explicitly insufficient. |
 | 2 | Open `/team`, find an engineer who needs support, then open the profile | The list is framed as coaching—not ranking—and the profile connects score → evidence → recommendation without changing any score. |
-| 3 | Open `/me?dev=tom` and adopt an available suggestion | The private view separates impact, coaching, and growth; adoption is clearly acknowledged and remains after reload. |
-| 4 | Open `/configure` and edit a weight without saving | MAIN and HARNESS totals remain separate, invalid totals block save, and no index logic is recomputed until the explicit save action. |
+| 3 | Open `/me` as a linked user and generate a Codex or Claude Code command | The command is scoped to the signed-in employee, expires in 15 minutes, and is shown only once. |
+| 4 | Open `/configure` as an administrator | The active public configuration is displayed read-only and scoring logic is not recomputed in the browser. |
 | 5 | Inspect every primary route at desktop and mobile widths | No horizontal page overflow, controls remain keyboard reachable, and tables have a usable small-screen treatment. |
 | 6 | Search visible UI and source for cost claims | No product surface reports dollars or hours saved; measured tokens are the only cost-like unit. |
 | 7 | Compare MAIN and HARNESS presentations | Harness is always labeled as a separate practice index and is never visually or mathematically folded into MAIN. |
-| 8 | Open `/connect`, activate a real GitHub installation, and create a personal Codex setup | The selected repo scope, real PR/commit evidence, and discovered team are visible; the one-time installer keeps prompt logging off, and arbitrary OTLP bodies/attributes never persist. |
+| 8 | Open `/connect`, activate a real GitHub installation, assign an email, then connect a personal coding agent from `/me` | The selected repo scope and real team are visible; Supabase links exactly one employee; the one-time installer keeps prompt logging off; arbitrary OTLP bodies/attributes never persist. |
 
 ## Golden set — paid coaching quality checks
 
@@ -47,3 +47,4 @@ CI: none in this local-only repository
 |---|---|---|---|
 | 2026-07-17 | A decision-first experience can improve comprehension without changing computed indexes. | Rung 1 passed; free behaviors 1–7 passed through browser and source checks. | $0 |
 | 2026-07-17 | A single-admin/single-org connection flow can prove real GitHub + per-user OTLP ingestion without mixing live people into demo scoring. | Rung 1 passed (292 tests); real GitHub sync ingested 22 PRs/58 commits and discovered 3 people; free behavior 8 passed via browser, temp-config installer, sanitized collector batch, and cleanup. | $0 |
+| 2026-07-17 | Exact-email Supabase identity plus a private workspace command can replace every demo surface without changing index logic. | Rung 1 passed (294 tests, typecheck, production build); v3 schema removed; 0 demo employees and 4 active GitHub employees remain; sign-in passed desktop/mobile browser checks. | $0 |

@@ -1,14 +1,16 @@
 # Prism architecture flow
 
-This is the user-facing decision flow. The Connect MVP adds real GitHub and per-user AI-tool inputs while keeping the deterministic scoring boundary unchanged. Live connector rows remain visibly separate from the v3 demo scoring world until a production ingestion adapter is promoted.
+This is the real-only user and evidence flow. GitHub defines the team, Supabase Auth links a login to one discovered employee, and that developer explicitly connects Codex or Claude Code. The deterministic scoring boundary remains unchanged.
 
 ```mermaid
 flowchart LR
-  K["GitHub App installation"] --> A["Live public raw evidence"]
-  L["Personal Codex / Claude opt-in"] --> M["Metadata-only OTLP collector"]
-  M --> A
-  A -. "production adapter pending" .-> B["Deterministic MAIN + HARNESS engine"]
-  V["v3 preview evidence"] --> B
+  K["GitHub App installation"] --> T["Real team + delivery evidence"]
+  T --> L["Supabase email login"]
+  L --> M["My workspace command"]
+  M --> N["Metadata-only OTLP collector"]
+  N --> A["Live public raw evidence"]
+  T --> A
+  A --> B["Deterministic MAIN + HARNESS engine"]
   B --> C{"Role / route context"}
   C -->|"Leader"| D["Function decision view"]
   C -->|"Coach"| E["People support view"]
@@ -25,10 +27,10 @@ flowchart LR
 ## Alignment
 
 - `services/engine` remains the only owner of index calculations.
-- `/connect` reads real `public.*` connector-control/raw tables; primary scoring views continue to read the isolated `v3.*` preview and retain the demo disclosure.
+- Every product route reads real `public.*` rows through the authenticated RLS client; connector and pipeline writes use narrowly scoped service-role paths.
 - GitHub installation is organization/account-level. Codex and Claude Code are connected per person through a hashed one-time invite and a personal collector token.
+- A login claims only an active, unclaimed employee whose normalized email exactly matches the Supabase user. The first linked real user bootstraps the initial admin role.
 - The OTLP boundary allowlists session/model/token/turn/prompt-length/success metadata and discards bodies plus unknown attributes before persistence.
-- `apps/web/lib/v3/read.ts` and `rollup.ts` remain the read/display boundary.
 - The web app may derive presentation labels, counts, sorting, and prioritization from already-computed rows; it may not recalculate scores.
 - The agent coaching flow consumes deterministic facts and produces grounded narrative only.
 - Configuration remains append-only: save a version, then recompute all views.
@@ -53,7 +55,8 @@ flowchart LR
 | Connection schema | `apps/web/supabase/migrations/0034_connect_mvp.sql` |
 | Function view | `apps/web/app/(views)/function/page.tsx` |
 | Team and member views | `apps/web/app/(views)/team/**` |
-| Private workspace | `apps/web/app/(views)/me/page.tsx`, `apps/web/components/v3/MyView.tsx` |
-| Model configuration | `apps/web/app/(views)/configure/page.tsx`, `ConfigureTable.tsx` |
-| Reads and rollups | `apps/web/lib/v3/read.ts`, `rollup.ts` |
+| Supabase identity linking | `apps/web/lib/auth/session.ts`, `workspace.ts`, `apps/web/app/auth/**` |
+| Private workspace | `apps/web/app/(views)/me/page.tsx`, `apps/web/components/connect/WorkspaceTelemetryCard.tsx` |
+| Model configuration | `apps/web/app/(views)/configure/page.tsx` |
+| Real-data reads | `apps/web/lib/db/**`, `apps/web/lib/connectors/telemetry/store.ts` |
 | Deterministic scoring | `services/engine` |

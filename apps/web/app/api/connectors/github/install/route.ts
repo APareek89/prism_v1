@@ -8,7 +8,7 @@
 //                               user installs the App. We discover the repos the
 //                               installation can see, connect the connector (persist
 //                               installation_id + repo_ids onto connectors.config_jsonb +
-//                               functions.repo_ids, ensure the self employee, sync org
+//                               functions.repo_ids, provision real GitHub identities, sync org
 //                               members), kick a backfill, then 302 back to /connect.
 //   POST (json { installationId, repoIds? }) → same connect+backfill, JSON response (for
 //                               a programmatic / fetch-driven connect).

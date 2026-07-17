@@ -45,8 +45,7 @@ export interface ByoClassification {
 /**
  * Classify parsed sessions by whether each is bound to an employee. `boundKeys`
  * is the set of `${sessionId} ${repo}` keys that resolved to a known employee
- * (for the single-person demo, every local session binds to the self employee, so
- * coverage is 100%). Pure — no I/O.
+ * through authenticated OTEL. Pure — no I/O.
  */
 export function classifyByo(
   sessions: readonly RawSession[],

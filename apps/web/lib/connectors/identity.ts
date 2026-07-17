@@ -9,7 +9,7 @@
 // This module deliberately delegates rather than duplicates:
 //   • resolution reuses the low-level finders in lib/db/onboarding (the employees CRUD
 //     floor — citext columns, the exact 0003 schema);
-//   • PROVISIONING (creating the self employee / onboarding joiners) reuses the ONE
+//   • PROVISIONING (creating GitHub-discovered joiners) reuses the ONE
 //     idempotent service in lib/onboarding/provision. We re-export it so connectors have
 //     a single import surface but the rules stay in exactly one place.
 //
@@ -24,7 +24,7 @@ import {
 
 // Re-export the provisioning service so connectors (org-sync, the connector connect
 // path) provision through the same chokepoint they resolve through.
-export { provisionEmployee, ensureSelfEmployee } from '@/lib/onboarding/provision';
+export { provisionEmployee } from '@/lib/onboarding/provision';
 export type { ProvisionEmployeeInput, ProvisionOutcome } from '@/lib/onboarding/provision';
 
 /** Normalize a GitHub handle for comparison (strip leading @; trim). citext handles

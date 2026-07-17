@@ -14,7 +14,6 @@
 // SERVER-ONLY: reads via the service-role admin client (RLS-bypassing, pipeline path).
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { ensureSelfEmployee } from '@/lib/onboarding/provision';
 import { WINDOW_DAYS, SIZING_WINDOW_DAYS } from '@/lib/config/constants';
 import type {
   DeployRow,
@@ -117,7 +116,7 @@ function boundsFor(date: string): Bounds {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Active employees (ensure the self employee first, so N >= 1)
+// Active employees (only rows provisioned from real identity sources)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface ActiveEmployee {
@@ -127,12 +126,10 @@ interface ActiveEmployee {
 }
 
 /**
- * List active employees for a function. Calls ensureSelfEmployee first so a fresh
- * connect/scan always has at least one real member to score (never synthetic).
+ * List active employees for a function. An empty roster is an honest no-data state;
+ * the pipeline never creates a placeholder member to force a score.
  */
 export async function listActiveEmployees(functionId: string): Promise<ActiveEmployee[]> {
-  await ensureSelfEmployee({ functionId });
-
   const db = looseDb();
   const raw = rows(
     await db

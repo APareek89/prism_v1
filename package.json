@@ -9,7 +9,6 @@
   "workspaces": [
     "packages/contract",
     "services/engine",
-    "services/ingest",
     "apps/web"
   ],
   "scripts": {
@@ -22,11 +21,6 @@
     "test:scoring": "npm run test:scoring --workspace apps/web",
     "test:engine": "npm run test --workspace services/engine",
     "db:migrate": "npm run db:migrate --workspace apps/web",
-    "demo:reset": "npm run demo:reset --workspace apps/web",
-    "inngest:dev": "npm run inngest:dev --workspace apps/web",
-    "v3:migrate": "npm run migrate --workspace services/ingest",
-    "v3:seed": "npm run seed --workspace services/ingest",
-    "v3:reset": "npm run reset --workspace services/ingest",
-    "v3:recompute": "npm run recompute --workspace services/engine"
+    "inngest:dev": "npm run inngest:dev --workspace apps/web"
   }
 }

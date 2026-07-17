@@ -8,21 +8,15 @@
 //   provisionEmployee(...)  → upsert by github_handle / email (idempotent). Derives
 //                             attribution_mode + match_status from the supplied
 //                             identity (a telemetry-linkable handle/uuid ⇒ matched).
-//   ensureSelfEmployee(...) → create/return the is_demo "self" employee from
-//                             DEMO_USER_EMAIL so the demo person is a REAL row the
-//                             pipeline scores (never synthetic).
-//
 // SERVER-ONLY: writes via the service-role CRUD in lib/db/onboarding. Never throws —
 // callers (Admin actions / pipeline) get a typed result and surface errors in chrome.
 
 import {
   findByIdentity,
-  findSelfEmployee,
   insertEmployee,
   updateEmployee,
   type EmployeeRecord,
 } from '@/lib/db/onboarding';
-import { serverEnv } from '@/lib/config/env';
 import type { AttributionMode } from '@/lib/types/db';
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -39,8 +33,6 @@ export interface ProvisionEmployeeInput {
   claudeAccountUuid?: string | null;
   /** Explicit attribution override (e.g. Admin sets 'byo'/'ignored'); else derived. */
   attributionMode?: AttributionMode;
-  /** Mark this row the is_demo "self" employee (ensureSelfEmployee path). */
-  isDemo?: boolean;
 }
 
 /** The provisioning outcome. `ok:false` carries a readable error; never throws. */
@@ -116,7 +108,7 @@ export async function provisionEmployee(input: ProvisionEmployeeInput): Promise<
 
   if (existing) {
     // Idempotent update: fill missing identity, refresh name/designation, recompute
-    // attribution. Preserve is_demo unless this call explicitly sets it true.
+    // attribution. Any employee provisioned from a real identity source is non-demo.
     const updated = await updateEmployee(existing.id, {
       name,
       designation: designation ?? existing.designation,
@@ -125,7 +117,7 @@ export async function provisionEmployee(input: ProvisionEmployeeInput): Promise<
       claude_account_uuid: claudeAccountUuid ?? existing.claude_account_uuid,
       attribution_mode,
       match_status,
-      is_demo: input.isDemo === true ? true : existing.is_demo,
+      is_demo: false,
       active: true,
     });
     if (!updated) return { ok: false, employee: existing, created: false, error: 'employee update failed' };
@@ -142,49 +134,8 @@ export async function provisionEmployee(input: ProvisionEmployeeInput): Promise<
     attribution_mode,
     match_status,
     active: true,
-    is_demo: input.isDemo === true,
+    is_demo: false,
   });
   if (!created) return { ok: false, employee: null, created: false, error: 'employee insert failed' };
   return { ok: true, employee: created, created: true, error: null };
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ensureSelfEmployee — the real is_demo "self" row scored by the pipeline
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Create or return the single is_demo "self" employee for a function. On first
- * connect/scan the demo person needs a REAL employees row (not synthetic) so the
- * pipeline scores them. Identity comes from DEMO_USER_EMAIL (env); the row is marked
- * is_demo + attribution 'byo' (a personal Claude subscription, reimbursable but
- * included). Idempotent: returns the existing self row if one is present.
- */
-export async function ensureSelfEmployee(args: {
-  functionId: string;
-  name?: string;
-  designation?: string | null;
-  githubHandle?: string | null;
-  claudeAccountUuid?: string | null;
-}): Promise<ProvisionOutcome> {
-  const functionId = norm(args.functionId);
-  if (!functionId) return { ok: false, employee: null, created: false, error: 'functionId is required' };
-
-  // Already provisioned? Return it (idempotent).
-  const existingSelf = await findSelfEmployee(functionId);
-  if (existingSelf) return { ok: true, employee: existingSelf, created: false, error: null };
-
-  const demoEmail = norm(serverEnv.DEMO_USER_EMAIL);
-  const name = norm(args.name) ?? (demoEmail ? demoEmail.split('@')[0] : null) ?? 'You';
-
-  // BYO: a personal subscription — flagged for reimbursement but INCLUDED in rates.
-  return provisionEmployee({
-    functionId,
-    name,
-    designation: norm(args.designation),
-    githubHandle: norm(args.githubHandle),
-    email: demoEmail,
-    claudeAccountUuid: norm(args.claudeAccountUuid),
-    attributionMode: 'byo',
-    isDemo: true,
-  });
 }
