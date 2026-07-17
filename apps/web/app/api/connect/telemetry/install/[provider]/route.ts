@@ -1,6 +1,7 @@
 import { buildTelemetryInstaller } from '@/lib/connectors/telemetry/installer';
 import { consumeTelemetryInvite } from '@/lib/connectors/telemetry/store';
 import { isTelemetryProvider } from '@/lib/connectors/telemetry/types';
+import { publicEnv } from '@/lib/config/env';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,16 +24,18 @@ export async function POST(
   try {
     const consumed = await consumeTelemetryInvite(provider, code);
     if (!consumed) return text('This Prism invite is invalid, expired, or already used.\n', 410);
-    return new Response(buildTelemetryInstaller(provider, consumed.token, new URL(req.url).origin), {
-      status: 200,
-      headers: {
-        'content-type': 'text/x-shellscript; charset=utf-8',
-        'cache-control': 'no-store, max-age=0',
-        'x-content-type-options': 'nosniff',
+    return new Response(
+      buildTelemetryInstaller(provider, consumed.token, new URL(publicEnv.NEXT_PUBLIC_APP_URL).origin),
+      {
+        status: 200,
+        headers: {
+          'content-type': 'text/x-shellscript; charset=utf-8',
+          'cache-control': 'no-store, max-age=0',
+          'x-content-type-options': 'nosniff',
+        },
       },
-    });
+    );
   } catch (error) {
     return text(`Prism setup failed: ${error instanceof Error ? error.message : 'unknown error'}\n`, 500);
   }
 }
-

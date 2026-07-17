@@ -86,5 +86,5 @@
 **Why 2:** Render terminates the public request at a proxy and forwards an internal localhost origin to the Next.js service.
 **Why 3:** Redirect construction assumed the application server could always infer the canonical external origin from an inbound request.
 **Deepest why type:** `environment`
-**Action taken:** Construct all auth callback destinations from the validated `NEXT_PUBLIC_APP_URL` deployment setting.
-**Preventive action:** Hosted auth QA must follow the callback through its final redirect and assert the final public origin, not only token verification.
+**Action taken:** Construct auth callback destinations and both stages of telemetry installer generation from the validated `NEXT_PUBLIC_APP_URL` deployment setting.
+**Preventive action:** Hosted auth QA must follow the callback through its final redirect, then generate and inspect a setup command and its installer endpoint for the same public origin.
