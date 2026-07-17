@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: e02b546 · branch: `codex/render-origin-fix` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 113c82e · branch: `codex/final-handoff` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -21,6 +21,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - ✅ New private GitHub repo `APareek89/prism_v1`; PR #1 merged to `main`. Render service is live at `https://prism-v1.onrender.com`; health reports production, demo false, DB ok.
 - ✅ Hosted login no longer depends on Supabase redirect allowlisting: Supabase generates/verifies the one-time token and Resend delivers the Prism callback. Unknown emails receive the same public response.
 - ✅ Auth redirects and every generated/consumed telemetry installer use `NEXT_PUBLIC_APP_URL`, not Render's proxy-internal request origin, so neither login nor agent setup can fall through to localhost.
+- ✅ Full hosted flow browser-verified on Render: one-time token lands at `/me`, the Codex command and consumed installer both use `https://prism-v1.onrender.com`, prompt logging stays off, and the console is clean. The test invite/revoked connection were removed, then the newest real login email was accepted for delivery.
 
 ## Product/architecture decisions
 
@@ -42,7 +43,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 ## Gotchas / next
 
 - Test user action: request the APareek89 work-email login at the Render URL, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
-- `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block Supabase Auth mail; configure Supabase custom SMTP for non-project-team recipients. Digest delivery remains off until a verified digest sender is configured.
+- `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block hosted auth mail, which uses `AUTH_FROM_EMAIL` or Resend's owner-only default sender. Verify a Resend domain and set both sender variables before inviting the broader team; digest delivery stays off until its sender is configured.
 - Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
 - Add the hosted `/auth/callback` to Supabase Auth redirect URLs as defense-in-depth/fallback, and add the hosted `/api/connectors/github/install` URL to the GitHub App setup/callback configuration.
 - Exact AI-session → repo/branch/PR, verification, context-read, and review-loop evidence still needs the metadata-only Prism Bridge/production adapter.
