@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 09418e9 · branch: `codex/admin-measurement-reset` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: fae0846 · branch: `codex/final-reset-handoff` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -39,6 +39,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 
 - Test user action: request the APareek89 work-email login at the Render URL, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
 - The original 10 lab commits used an unlinked noreply address and remain honestly unattributed; PR #6 uses `142583211+APareek89@users.noreply.github.com`, so its two commits appear in APareek89's person-level Admin trace. Do not patch historical attribution in SQL.
+- GitHub App installation settings still grant access to both `APareek89/prism` and the lab. Saving that configuration fired the setup callback, which temporarily mirrored both repos and reingested 22 old PRs. The final transaction cleared them again and re-pinned the internal connector/function scopes to only the lab. For a durable GitHub-side guard, remove `APareek89/prism` from installation 143692925 and leave only `prism-measurement-lab`; any future setup callback treats GitHub's selected-repo list as authoritative.
 - Selectively port PR #22's `pr_link_ingest` table, Claude plugin, route, and linker seam into the current monorepo after adapting them to hashed telemetry connections. Do not wholesale cherry-pick the 49-file older-app PR. Multi-tenancy and the ROI statement are separate product decisions.
 - `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block hosted auth mail, which uses `AUTH_FROM_EMAIL` or Resend's owner-only default sender. Verify a Resend domain and set both sender variables before inviting the broader team; digest delivery stays off until its sender is configured.
 - Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
