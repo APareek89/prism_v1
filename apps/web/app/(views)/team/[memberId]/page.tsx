@@ -5,15 +5,14 @@ import { getIndex, getImprovements } from '@/lib/db/index-read';
 import { MemberDetail } from '@/components/panels/MemberDetail';
 import { BackLink } from '@/components/ui/BackLink';
 import { getAuthUser } from '@/lib/auth/session';
-import { canViewMember } from '@/lib/auth/roles';
+import { can } from '@/lib/auth/roles';
+import { canAccessEmployee } from '@/lib/auth/scope';
 import { ROUTES, parsePeriod } from '@/lib/config/constants';
 
 export const dynamic = 'force-dynamic';
 
-export async function generateMetadata({ params }: { params: Promise<{ memberId: string }> }): Promise<Metadata> {
-  const { memberId } = await params;
-  const member = await getMember(memberId);
-  return { title: member ? `${member.row.name} · Prism` : 'Member · Prism' };
+export async function generateMetadata(): Promise<Metadata> {
+  return { title: 'Member · Prism' };
 }
 
 export default async function MemberDetailView({
@@ -27,7 +26,7 @@ export default async function MemberDetailView({
   const sp = await searchParams;
   const period = parsePeriod(sp.period);
   const user = await getAuthUser();
-  if (!user || !canViewMember(user, memberId)) notFound();
+  if (!user || !can(user, 'view_team_aggregates') || !(await canAccessEmployee(user, memberId))) notFound();
 
   const member = await getMember(memberId);
   if (!member) notFound();

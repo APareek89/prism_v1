@@ -21,13 +21,16 @@ CI: none in this local-only repository
 |---|---|---|
 | 1 | Open `/function` after signing in with a linked real employee | In ten seconds, the page identifies available real evidence and confidence; missing evidence is explicitly insufficient. |
 | 2 | Open `/team`, find an engineer who needs support, then open the profile | The list is framed as coaching—not ranking—and the profile connects score → evidence → recommendation without changing any score. |
-| 3 | Open `/me` as a linked user and generate a Codex or Claude Code command | The command is scoped to the signed-in employee, expires in 15 minutes, and is shown only once. |
-| 4 | Open `/configure` as an administrator | The active public configuration is displayed read-only and scoring logic is not recomputed in the browser. |
+| 3 | Open `/me?tab=connection` as a linked user and generate a Codex or Claude Code command | Only admin-approved providers/methods appear; the command is scoped to the signed-in employee, expires in 15 minutes, and is shown only once. |
+| 4 | Open `/configure` as an administrator | Five steps are gated in order; connection/data/access changes are audited; any weight change appends a config version and never recomputes in the browser. |
 | 5 | Inspect every primary route at desktop and mobile widths | No horizontal page overflow, controls remain keyboard reachable, and tables have a usable small-screen treatment. |
 | 6 | Search visible UI and source for cost claims | No product surface reports dollars or hours saved; measured tokens are the only cost-like unit. |
 | 7 | Compare MAIN and HARNESS presentations | Harness is always labeled as a separate practice index and is never visually or mathematically folded into MAIN. |
 | 8 | Open `/connect`, activate a real GitHub installation, assign an email, then connect a personal coding agent from `/me` | The selected repo scope and real team are visible; Supabase links exactly one employee; the one-time installer keeps prompt logging off; arbitrary OTLP bodies/attributes never persist. |
 | 9 | Open `/admin` as an administrator, choose a person/date, and inspect a KPI through to its evidence | The page replays the unchanged scoring engine, shows raw → normalized → weighted contribution plus confidence/cohort/L0/L5 gates, and keeps stored agent narration visually separate from deterministic math. |
+| 10 | Open `/my-actions`, record “I actioned this,” then inspect the recommendation | A human action event is persisted, the recommendation stays awaiting later evidence, and no adoption or impact is claimed. |
+| 11 | Open `/org-actions` as a Manager/Management/Admin | Candidates come only from real connector gaps, assignments, or persisted insights; created actions have an owner/status and do not imply causality. |
+| 12 | Compare navigation and guarded routes for Member, Manager, Management, and Admin | Member sees only My View/My Actions; Configuration/Admin are server-enforced Admin-only; management scopes are enforced beyond hidden navigation. |
 
 ## Golden set — paid coaching quality checks
 
@@ -50,3 +53,4 @@ CI: none in this local-only repository
 | 2026-07-17 | A single-admin/single-org connection flow can prove real GitHub + per-user OTLP ingestion without mixing live people into demo scoring. | Rung 1 passed (292 tests); real GitHub sync ingested 22 PRs/58 commits and discovered 3 people; free behavior 8 passed via browser, temp-config installer, sanitized collector batch, and cleanup. | $0 |
 | 2026-07-17 | Exact-email Supabase identity plus a private workspace command can replace every demo surface without changing index logic. | Rung 1 passed (294 tests, typecheck, production build); v3 schema removed; 0 demo employees and 4 active GitHub employees remain; sign-in passed desktop/mobile browser checks. | $0 |
 | 2026-07-18 | An admin-only read model can make every score contribution auditable without copying or changing scoring formulas. | Rung 1 passed (297 tests, typecheck, production build); authenticated desktop/mobile behavior 9 passed with zero overflow and zero console errors; all 3 diagrams validate. | $0 |
+| 2026-07-18 | A gated organization setup plus separated view/action surfaces can make Prism demo-ready without weakening the deterministic or real-data boundaries. | Rung 1 passed (309 tests, typecheck, production build); migration 0037 applied with zero seed rows; measurement start and consent are enforced at assembly/analytics boundaries; complete KPI anchors and audited before/after state are visible; real repo/team/manager operating filters preserve honest token attribution; authenticated Configuration, Overview, My View, My Actions, Org Actions, and Admin passed desktop/mobile browser checks with zero final console errors. | $0 |

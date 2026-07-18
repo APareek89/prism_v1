@@ -297,7 +297,8 @@ export async function getTokenStats(period: Period): Promise<TokenStatsDTO> {
       deltaPct === null
         ? null
         : `${deltaPct <= 0 ? '▼' : '▲'} ${Math.abs(deltaPct)}% ${pv.deltaBaselineLabel}`,
-    costPerPrLabel: costPerPrLabel(current),
+    // USD is shown only from provider-reported cc_sessions.cost_usd in analytics.ts.
+    costPerPrLabel: null,
     targetLabel: null, // target is a config-derived line; surfaced when config provides it
     series,
   };
@@ -308,12 +309,6 @@ function baselineForTokens(series: number[], period: Period): number | null {
   const off = baselineOffset(period);
   const idx = series.length - 1 - off;
   return idx >= 0 ? series[idx]! : null;
-}
-
-/** Rough $/PR from tokens/PR (Sonnet-class blended rate placeholder ~$7/Mtok). */
-function costPerPrLabel(tokensPerPr: number): string {
-  const usd = (tokensPerPr / 1_000_000) * 7;
-  return `≈ $${usd.toFixed(2)} / PR`;
 }
 
 export function emptyTokenStats(): TokenStatsDTO {

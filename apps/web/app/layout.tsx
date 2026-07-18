@@ -7,6 +7,8 @@
 import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { AppShell } from '@/components/layout/AppShell';
+import { getAuthUser } from '@/lib/auth/session';
+import { createAdminClient } from '@/lib/supabase/admin';
 import './globals.css';
 
 // Font CSS variables. globals.css :root sets --disp/--body/--mono to the family
@@ -42,10 +44,17 @@ export const viewport: Viewport = {
   colorScheme: 'light',
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const user = await getAuthUser();
+  let workspaceName: string | null = null;
+  if (user) {
+    const { data } = await createAdminClient().from('functions').select('name').eq('id', user.functionId).maybeSingle();
+    workspaceName = (data as { name?: string } | null)?.name ?? null;
+  }
   return (
     <html
       lang="en"
+      data-scroll-behavior="smooth"
       className={`${spaceGrotesk.variable} ${ibmPlexSans.variable} ${jetBrainsMono.variable}`}
     >
       <head>
@@ -64,7 +73,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}</style>
       </head>
       <body>
-        <AppShell>{children}</AppShell>
+        <AppShell roles={user?.roles ?? []} workspaceName={workspaceName}>{children}</AppShell>
       </body>
     </html>
   );

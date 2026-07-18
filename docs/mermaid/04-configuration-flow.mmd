@@ -1,0 +1,28 @@
+%% Prism admin configuration state machine
+%% verified: 2026-07-18 migration 0037 + guarded server writes
+%% files: apps/web/components/configuration/ConfigurationClient.tsx, apps/web/app/api/configuration/route.ts, apps/web/lib/configuration/store.ts, apps/web/supabase/migrations/0037_configuration_and_actions.sql
+%% granularity: master
+flowchart LR
+  A{"Admin capability?<br/>DECISION · edit_config"} -->|"No"| X["Access denied<br/>TERM"]
+  A -->|"Yes"| B["1 Connection<br/>FUNCTION · GitHub live + providers + email or terminal"]
+  B --> C["2 Data<br/>FUNCTION · item-level approval + significance"]
+  C --> D{"Metric dependencies met?<br/>DECISION · enabled data keys"}
+  D -->|"No"| E["Disabled reason<br/>TERM · missing evidence named"]
+  D -->|"Yes"| F["3 Index<br/>FUNCTION · weights total 100%"]
+  E --> F
+  F --> G{"Weights changed?<br/>DECISION"}
+  G -->|"No"| H["Confirm active version<br/>FUNCTION"]
+  G -->|"Yes"| I[("Append new frozen version<br/>DATA · no historical rewrite")]
+  H --> J["4 Organization<br/>FUNCTION · app repos → narrower Prism scope"]
+  I --> J
+  J --> K["People structure<br/>FUNCTION · email + title + team"]
+  K --> L["5 Access<br/>FUNCTION · Admin, Management, Manager, Member"]
+  L --> M[("Configuration audit<br/>DATA · actor + before + after + time")]
+  class B,C,F,H,J,K,L fn;
+  class A,D,G dec;
+  class E,X term;
+  class I,M data;
+  classDef fn fill:#dcfce7,stroke:#16a34a,color:#052e16;
+  classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;
+  classDef term fill:#e5e7eb,stroke:#6b7280,color:#111827;
+  classDef data fill:#ede9fe,stroke:#7c3aed,color:#2a0a4a;

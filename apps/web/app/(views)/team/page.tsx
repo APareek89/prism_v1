@@ -1,4 +1,6 @@
-import { getCurrentFunctionId } from '@/lib/db/_base';
+import { getAuthUser } from '@/lib/auth/session';
+import { can } from '@/lib/auth/roles';
+import { visibleEmployeeIds } from '@/lib/auth/scope';
 import { getMeta } from '@/lib/db/index-read';
 import { getRoster } from '@/lib/db/roster';
 import { getConnectOverview } from '@/lib/connectors/telemetry/store';
@@ -17,18 +19,26 @@ export default async function TeamView({
 }) {
   const sp = await searchParams;
   const period = parsePeriod(sp.period);
-  const functionId = await getCurrentFunctionId();
+  const user = await getAuthUser();
+  if (!user || !can(user, 'view_team_aggregates')) {
+    return <div className="page"><PageHeader kicker="People" title="Team access required" description="This view is available to Managers, Management, and Admins. Members use My View and My Actions." /></div>;
+  }
+  const functionId = user.functionId;
 
-  const [meta, roster, live] = functionId
+  const [meta, unscopedRoster, live, visibleIds] = functionId
     ? await Promise.all([
         getMeta('team', functionId, period),
         getRoster(functionId),
         getConnectOverview(functionId),
+        visibleEmployeeIds(user),
       ])
-    : [null, [], null];
+    : [null, [], null, new Set<string>()];
+  const roster = visibleIds === null ? unscopedRoster : unscopedRoster.filter((member) => visibleIds.has(member.id));
 
   const connectedPeople = live?.employees.filter(
-    (employee) => employee.codexStatus === 'connected' || employee.claudeStatus === 'connected',
+    (employee) =>
+      (visibleIds === null || visibleIds.has(employee.id))
+      && (employee.codexStatus === 'connected' || employee.claudeStatus === 'connected'),
   ).length ?? 0;
 
   return (
@@ -40,7 +50,7 @@ export default async function TeamView({
         actions={<PeriodToggle />}
         meta={
           <>
-            <MetaChip label="GitHub members" value={roster.length} tone="accent" />
+            <MetaChip label="Visible people" value={roster.length} tone="accent" />
             <MetaChip label="AI connected" value={`${connectedPeople}/${roster.length}`} />
             <MetaChip label="Confidence" value={meta?.confidence ?? 'Insufficient'} />
             <MetaChip label="Data" value="Real only" />

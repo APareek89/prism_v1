@@ -4,17 +4,17 @@ Prism is the AI-Native Engineering Index. The most honest way to trust it is to 
 at **this repo** and watch it score how we build it.
 
 ## The workflow
-Every change to Prism goes through a PR built with Claude Code:
+Every change to Prism goes through a PR built with Codex or Claude Code:
 
 ```
 git checkout -b <type>/<slug>
-# real work with Claude Code — keep the `Co-authored-by: Claude` commit trailer
+# real work with an opted-in agent — keep the matching co-author trailer
 git commit -am "..." && git push -u origin <type>/<slug>
 gh pr create --fill && gh pr merge --squash
 ```
 
 ## Why the trailer matters
-The `Co-authored-by: Claude` trailer is how Prism's GitHub connector flags a commit as
+The `Co-authored-by: Codex` or `Co-authored-by: Claude` trailer is one way Prism's GitHub connector flags a commit as
 AI-assisted (`gh_commits.coauthor_trailer`), which drives:
 - **Usage** — AI-assisted PR share, agentic depth
 - the **AI→PR link** (`pr_ai_link`) that ties a merged PR back to the Claude session

@@ -1,32 +1,32 @@
 %% Prism product decision flow
-%% verified: 2026-07-18 metadata-only PR-link enrichment
-%% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/db/index.ts
+%% verified: 2026-07-18 configuration + role-aware action workflow
+%% files: apps/web/lib/nav/routes.ts, apps/web/app/(views)/configure/page.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/my-actions/page.tsx, apps/web/app/(views)/org-actions/page.tsx
 %% granularity: master
 flowchart LR
-  K["GitHub App<br/>FUNCTION · real team + delivery"] --> A["public evidence<br/>DATA · real rows only"]
-  L["Supabase-linked developer<br/>FUNCTION · exact email claim"] --> M["Personal OTEL setup<br/>FUNCTION · Codex or Claude Code"]
-  M --> N["Provider hook bridge<br/>FUNCTION · session → repo#PR only"]
-  N --> A
-  M --> A
-  A --> B["Deterministic engine<br/>MAIN + HARNESS + evidence"]
-  B --> C[("Who is looking?<br/>FUNCTION · route + role context")]
-  C -->|"Engineering leader"| D["Function overview<br/>current impact + constraint + priority"]
-  C -->|"Team coach"| E["People view<br/>support signals + drill-down"]
-  C -->|"Developer"| F["My workspace<br/>impact + private coach + growth"]
-  C -->|"Model owner"| G["Model configuration<br/>weights + versioned recompute"]
-  D --> H["Evidence<br/>dimensions + linkage + trust"]
-  E --> H
-  F --> H
-  H --> I["Action<br/>recommendation + owner + adoption"]
-  G --> J["New config version<br/>full deterministic recompute"]
-  J --> B
-  class K,L,M,N,B,H,J fn;
-  class A data;
-  class C dec;
-  class D,E,F,G,I term;
-  classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
+  A["GitHub App<br/>FUNCTION · organization evidence"] --> B["Personal Codex or Claude consent<br/>FUNCTION · per employee"]
+  B --> C[("Approved real evidence<br/>DATA · no prompt or code content")]
+  A --> C
+  D["Admin Configuration<br/>FUNCTION · five gated steps"] --> E["Processing consent + repo scope<br/>FUNCTION · audited settings"]
+  E --> C
+  E --> F["Append-only index config<br/>FUNCTION · future versions only"]
+  C --> G["Deterministic scoring engine<br/>FUNCTION · formulas + confidence + gates"]
+  F --> G
+  G --> H{"Server-side capability gate<br/>DECISION · role + scope"}
+  H -->|"Management or Admin"| I["Overview<br/>TERM · impact + consumption + delta math"]
+  H -->|"Manager or above"| J["People + Org Actions<br/>TERM · scoped interventions"]
+  H -->|"Every member"| K["My View<br/>TERM · connection + performance"]
+  H -->|"Every member"| L["My Actions<br/>TERM · recs + official learning"]
+  G --> M["Admin calculation trace<br/>TERM · evidence → KPI → L2 → L1"]
+  L --> N[("Human action event<br/>DATA · intent, not impact")]
+  J --> O[("Organization action<br/>DATA · owner + status + evidence")]
+  N --> P["Later evidence verification<br/>FUNCTION · adoption monitor"]
+  O --> P
+  P --> C
+  class A,B,D,E,F,G,P fn;
+  class C,N,O data;
+  class H dec;
+  class I,J,K,L,M term;
   classDef fn fill:#dcfce7,stroke:#16a34a,color:#052e16;
   classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;
   classDef term fill:#e5e7eb,stroke:#6b7280,color:#111827;
-  classDef ask fill:#cffafe,stroke:#0891b2,color:#083344;
   classDef data fill:#ede9fe,stroke:#7c3aed,color:#2a0a4a;

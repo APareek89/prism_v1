@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { PrismLogo } from '@/components/brand/PrismLogo';
 import { Icon } from '@/components/ui/Icon';
-import { NAV_ITEMS, isActive, type NavItem } from '@/lib/nav/routes';
+import { visibleNavItems, isActive, type NavItem } from '@/lib/nav/routes';
+import type { AppRole } from '@/lib/types';
 
 const GROUPS = ['Measure', 'Improve', 'System'] as const;
 
@@ -20,11 +21,13 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
   );
 }
 
-export function Sidebar() {
+export function Sidebar({ roles, workspaceName }: { roles: AppRole[]; workspaceName: string | null }) {
   const pathname = usePathname() ?? '/';
+  const items = visibleNavItems(roles);
+  const homeHref = roles.includes('admin') || roles.includes('function_lead') ? '/function' : '/me';
   return (
     <aside className="sidebar">
-      <Link href="/function" className="sidebar-brand" aria-label="Prism overview">
+      <Link href={homeHref} className="sidebar-brand" aria-label="Prism home">
         <span className="brand-mark"><PrismLogo size={29} /></span>
         <span className="brand-copy">
           <span className="brand-name">Prism</span>
@@ -34,14 +37,14 @@ export function Sidebar() {
 
       <div className="workspace-switcher">
         <small>Workspace</small>
-        <strong>Engineering function</strong>
+        <strong>{workspaceName ?? 'Engineering workspace'}</strong>
       </div>
 
       <nav className="sidebar-nav" aria-label="Primary navigation">
         {GROUPS.map((group) => (
           <div className="nav-group" key={group}>
             <span className="nav-group-label">{group}</span>
-            {NAV_ITEMS.filter((item) => item.group === group).map((item) => (
+            {items.filter((item) => item.group === group).map((item) => (
               <NavLink key={item.href} item={item} active={isActive(pathname, item)} />
             ))}
           </div>

@@ -31,6 +31,7 @@ import {
   type PrSignalInput,
 } from './pr-signals';
 import { reconcileStoredConfig } from './config-reconcile';
+import { getProcessingPolicy } from '@/lib/configuration/policy';
 
 const DAY_MS = 86_400_000;
 const REVERT_WINDOW_MS = 14 * DAY_MS;
@@ -104,13 +105,16 @@ interface Bounds {
 }
 
 /** Build trailing windows ending at the END of the passed run date (UTC). */
-function boundsFor(date: string): Bounds {
+function boundsFor(date: string, measurementStartDate: string | null = null): Bounds {
   const runMs = Date.parse(`${date}T00:00:00.000Z`);
   const endOfDay = runMs + DAY_MS - 1;
+  const measurementStartMs = measurementStartDate
+    ? Date.parse(`${measurementStartDate}T00:00:00.000Z`)
+    : Number.NEGATIVE_INFINITY;
   return {
     runMs,
-    computeSince: new Date(endOfDay - WINDOW_DAYS * DAY_MS).toISOString(),
-    sizingSince: new Date(endOfDay - SIZING_WINDOW_DAYS * DAY_MS).toISOString(),
+    computeSince: new Date(Math.max(endOfDay - WINDOW_DAYS * DAY_MS, measurementStartMs)).toISOString(),
+    sizingSince: new Date(Math.max(endOfDay - SIZING_WINDOW_DAYS * DAY_MS, measurementStartMs)).toISOString(),
     until: new Date(endOfDay).toISOString(),
   };
 }
@@ -227,6 +231,7 @@ interface SessionDbRow {
   suggestions_accepted: unknown;
   skills_used: unknown;
   linked_pr: unknown;
+  provider: unknown;
 }
 
 /** CC sessions whose `ts` lands in the 28d compute window. */
@@ -236,7 +241,7 @@ async function loadWindowSessions(functionId: string, b: Bounds): Promise<Sessio
     await db
       .from('cc_sessions')
       .select(
-        'id, employee_id, session_id, ts, turns, tokens_in, tokens_out, cache_read, cache_creation, suggestions_offered, suggestions_accepted, skills_used, linked_pr',
+        'id, employee_id, session_id, ts, turns, tokens_in, tokens_out, cache_read, cache_creation, suggestions_offered, suggestions_accepted, skills_used, linked_pr, provider',
       )
       .eq('function_id', functionId)
       .gte('ts', b.computeSince)
@@ -318,6 +323,7 @@ async function loadWindowCommits(functionId: string, b: Bounds): Promise<CommitD
 
 interface PrAiLinkDbRow {
   pr_id: string | null;
+  cc_session_id: string | null;
 }
 
 /** All pr_ai_link rows for the function → the set of PR ids with a confirmed AI link
@@ -328,7 +334,7 @@ async function loadPrAiLinks(functionId: string): Promise<PrAiLinkDbRow[]> {
   return rows(
     await db
       .from('pr_ai_link')
-      .select('pr_id, function_id')
+      .select('pr_id, cc_session_id, function_id')
       .eq('function_id', functionId),
   ) as unknown as PrAiLinkDbRow[];
 }
@@ -395,24 +401,24 @@ function toPrSignalInput(r: PrDbRow): PrSignalInput {
 }
 
 /** Map one cc_sessions row → the scoring `SessionRow`. */
-function mapSession(r: SessionDbRow): SessionRow {
+function mapSession(r: SessionDbRow, includeTokens: boolean, includePrLink: boolean): SessionRow {
   const skills = Array.isArray(r.skills_used)
     ? (r.skills_used as unknown[]).filter((s): s is string => typeof s === 'string')
     : [];
   return {
     sessionId: typeof r.session_id === 'string' ? r.session_id : String(r.id),
-    linkedPrId: str(r.linked_pr),
+    linkedPrId: includePrLink ? str(r.linked_pr) : null,
     day: dayKey(r.ts) ?? '',
     turns: num(r.turns),
-    tokensIn: num(r.tokens_in),
-    tokensOut: num(r.tokens_out),
-    cacheRead: num(r.cache_read),
-    cacheCreation: num(r.cache_creation),
+    tokensIn: includeTokens ? num(r.tokens_in) : 0,
+    tokensOut: includeTokens ? num(r.tokens_out) : 0,
+    cacheRead: includeTokens ? num(r.cache_read) : 0,
+    cacheCreation: includeTokens ? num(r.cache_creation) : 0,
     suggestionsOffered: num(r.suggestions_offered),
     suggestionsAccepted: num(r.suggestions_accepted),
     skillsUsed: skills,
     // producedOutput: a session that touched a skill or linked to a PR produced output.
-    producedOutput: skills.length > 0 || str(r.linked_pr) !== null,
+    producedOutput: skills.length > 0 || (includePrLink && str(r.linked_pr) !== null),
     // excludedFromAiRates: an unbound (employee_id null) stream is BYO/unmatched.
     excludedFromAiRates: str(r.employee_id) === null,
   };
@@ -556,8 +562,11 @@ function attributeDeploys(
  * attributed by sha→PR author, falling back to the self/first member.
  */
 export async function assembleMembers(functionId: string, date: string): Promise<AssembledInputs> {
-  const b = boundsFor(date);
-  const employees = await listActiveEmployees(functionId);
+  const [employees, processingPolicy] = await Promise.all([
+    listActiveEmployees(functionId),
+    getProcessingPolicy(functionId),
+  ]);
+  const b = boundsFor(date, processingPolicy.measurementStartDate);
 
   const [prDbRows, sessionDbRows, deployDbRows, sizingDbRows, commitDbRows, linkDbRows] =
     await Promise.all([
@@ -569,6 +578,20 @@ export async function assembleMembers(functionId: string, date: string): Promise
       loadPrAiLinks(functionId),
     ]);
   const blameDbRows = await loadWindowBlame(functionId, b);
+  const effectivePrRows = processingPolicy.enabled('github.reverts')
+    ? prDbRows
+    : prDbRows.map((row) => ({ ...row, reverted_at: null }));
+  const effectiveSessions = sessionDbRows.filter((row) => {
+    const provider = str(row.provider) === 'codex' ? 'codex' : 'claude';
+    return processingPolicy.enabled(`${provider === 'codex' ? 'llm' : 'claude'}.session_metadata`)
+      || processingPolicy.enabled(`${provider === 'codex' ? 'llm' : 'claude'}.token_usage`);
+  });
+  const allowedLinkedSessionIds = new Set(effectiveSessions.filter((row) => {
+    const codex = str(row.provider) === 'codex';
+    return processingPolicy.enabled(codex ? 'llm.pr_link' : 'claude.pr_link');
+  }).map((row) => String(row.id)));
+  const effectiveLinkRows = linkDbRows.filter((row) => row.cc_session_id && allowedLinkedSessionIds.has(String(row.cc_session_id)));
+  const effectiveDeploys = processingPolicy.enabled('sentry.incidents') ? deployDbRows : [];
 
   // ── Derive per-PR signals (pure) from the joined evidence ──────────────────
   const commits: CommitSignalInput[] = commitDbRows.map((c) => ({
@@ -585,24 +608,24 @@ export async function assembleMembers(functionId: string, date: string): Promise
     aliveAt30d: bl.alive_at_30d === null ? null : bool(bl.alive_at_30d),
   }));
   const linkedPrIds = new Set<string>();
-  for (const l of linkDbRows) {
+  for (const l of effectiveLinkRows) {
     const id = str(l.pr_id);
     if (id) linkedPrIds.add(id);
   }
   const derived = derivePrSignals({
-    prs: prDbRows.map(toPrSignalInput),
+    prs: effectivePrRows.map(toPrSignalInput),
     commits,
     blame,
     linkedPrIds,
   });
 
   // Partition PRs / sessions by employee_id.
-  const prsByEmp = groupBy(prDbRows, (r) => str(r.employee_id));
-  const sessByEmp = groupBy(sessionDbRows, (r) => str(r.employee_id));
+  const prsByEmp = groupBy(effectivePrRows, (r) => str(r.employee_id));
+  const sessByEmp = groupBy(effectiveSessions, (r) => str(r.employee_id));
 
   // Deploys: sha→PR-author attribution, fall back to the self/first member.
   const selfId = employees[0]?.id ?? null;
-  const deploysByEmp = attributeDeploys(deployDbRows, prDbRows, selfId);
+  const deploysByEmp = attributeDeploys(effectiveDeploys, effectivePrRows, selfId);
 
   // skills authored: NOT yet a raw table (M3 authorship capture). Empty for every
   // member today → Proficiency authorship KPIs report no signal, never fabricated.
@@ -617,7 +640,14 @@ export async function assembleMembers(functionId: string, date: string): Promise
         workingDays: workingDaysFor(empPrs, empSessions),
       },
       prs: empPrs.map((r) => mapPr(r, derived.get(String(r.id)))),
-      sessions: empSessions.map(mapSession),
+      sessions: empSessions.map((row) => {
+        const codex = str(row.provider) === 'codex';
+        return mapSession(
+          row,
+          processingPolicy.enabled(codex ? 'llm.token_usage' : 'claude.token_usage'),
+          processingPolicy.enabled(codex ? 'llm.pr_link' : 'claude.pr_link'),
+        );
+      }),
       deploys: deploysByEmp.get(emp.id) ?? [],
       skills: skillsByEmp(emp.id),
     };
@@ -634,9 +664,9 @@ export async function assembleMembers(functionId: string, date: string): Promise
     config,
     counts: {
       employees: employees.length,
-      windowPrs: prDbRows.length,
-      sessions: sessionDbRows.length,
-      deploys: deployDbRows.length,
+      windowPrs: effectivePrRows.length,
+      sessions: effectiveSessions.length,
+      deploys: effectiveDeploys.length,
       blameLines: blameDbRows.length,
       sizingPrs: sizingDbRows.length,
     },

@@ -3,6 +3,7 @@ import { badRequest, ok, readJson, serverError } from '@/app/api/connectors/_lib
 import { createTelemetryInvite, revokeTelemetryConnection } from '@/lib/connectors/telemetry/store';
 import { isTelemetryProvider } from '@/lib/connectors/telemetry/types';
 import { publicEnv } from '@/lib/config/env';
+import { getConnectionPolicy } from '@/lib/configuration/store';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,9 @@ export const POST = withAuth(async (req, user): Promise<Response> => {
   }
 
   try {
+    const policy = await getConnectionPolicy(user.functionId);
+    if (!policy.allowedProviders.includes(body.provider)) return badRequest('This provider is not enabled by your workspace administrator.');
+    if (!policy.connectionMethods.includes('terminal')) return badRequest('Terminal setup is not enabled for this workspace. Use the email setup method selected by your administrator.');
     const invite = await createTelemetryInvite({
       functionId: user.functionId,
       employeeId: user.employeeId,
