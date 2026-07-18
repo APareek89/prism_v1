@@ -28,6 +28,11 @@ function stdin() {
   });
 }
 
+function responseText(value) {
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value); } catch { return ''; }
+}
+
 async function post(url, token, payload) {
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -57,13 +62,20 @@ async function main() {
   if (!config?.url || !config?.token) return;
 
   const raw = await stdin();
-  if (!prCreateCommand.test(raw)) return;
-  const match = prUrl.exec(raw);
-  if (!match) return;
   let event = {};
-  try { event = JSON.parse(raw); } catch { /* the URL scan still stays valid */ }
+  try { event = JSON.parse(raw); } catch { debug('ignored: invalid hook envelope'); return; }
+  const toolInput = event.tool_input || event.toolInput || {};
+  const command = typeof toolInput.command === 'string'
+    ? toolInput.command
+    : typeof toolInput.cmd === 'string'
+      ? toolInput.cmd
+      : '';
+  if (!prCreateCommand.test(command)) { debug('ignored: no gh pr create intent'); return; }
+  const output = responseText(event.tool_response ?? event.toolResponse);
+  const match = prUrl.exec(output);
+  if (!match) { debug('ignored: created PR URL missing from tool response'); return; }
   const sessionId = event.session_id || event.sessionId || '';
-  if (typeof sessionId !== 'string' || !sessionId.trim()) return;
+  if (typeof sessionId !== 'string' || !sessionId.trim()) { debug('ignored: session id missing'); return; }
 
   const payload = {
     sessionId: sessionId.trim(),

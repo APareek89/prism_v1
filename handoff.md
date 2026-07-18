@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: ee39196 · branch: `codex/pr-link-command-guard` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 4cc43fe · branch: `codex/telemetry-time-hook-reliability` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -17,6 +17,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - ✅ PR #10 merged and Render deployed: migration `0035` is applied live, the existing personal installer adds a metadata-only `PostToolUse(Bash)` PR bridge for both Codex and Claude Code beside OTLP, the authenticated route double-checks repo scope and verifies the PR through the GitHub App, and the linker consumes only an exact connection/session match at `pr_link@0.99`. The public machine route returns JSON 401 without redirecting to sign-in.
 - ✅ Admin now expands the unchanged engine result into literal raw-evidence, anchor-normalization, L2, L1, confidence, publication, and band equations, plus a verified-beacon pending/linked ledger. Web tests pass (256), workspace typecheck and production build pass, the secret scan is clean, and all diagrams validate.
 - ✅ Lab dogfooding PRs #7 and #8 added six correctly attributed Codex-coauthored commits (score calculation ledger + honest report trend) and 20 passing tests. Live GitHub ingest, real-session hook verification, recalculation, and browser QA remain in progress.
+- ✅ Real Codex session `019f755c-…` created lab PR #9 with two more coauthored commits and 23 passing tests. Nine OTLP events arrived through the personal bearer and one verified PR-link beacon is stored; migration `0036` repaired the provider's zero OTLP timestamps from immutable receive times without changing any score input or formula.
 
 ## Product/architecture decisions
 
@@ -34,6 +35,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - 2026-07-18 — PR-link is additive enrichment, not a telemetry replacement: OTLP remains the activity/token feed; provider hooks send only `{sessionId, repo, prNumber}` and inherit identity from the existing hashed per-person collector connection.
 - 2026-07-18 — A PR-link beacon becomes linkable only after bearer authentication, double internal repo-scope validation, GitHub App PR verification, and an exact `(connection_id, source_session_id)` match to a real session. No fuzzy time/author matching is allowed.
 - 2026-07-18 — Admin may show numeric substitutions and consistency checks derived from returned engine values and raw evidence, but the calculations continue to execute only in the existing scoring modules.
+- 2026-07-18 — A non-positive OTLP provider timestamp is missing metadata, not 1970 activity. Normalization tries observed time next and otherwise uses collector receipt time; existing zero-time events are repaired only from their immutable `created_at` values.
 
 ## Hard boundaries
 
@@ -46,11 +48,11 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - Test user action: request the APareek89 work-email login at the Render URL, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
 - The original 10 lab commits used an unlinked noreply address and remain honestly unattributed; PR #6 uses `142583211+APareek89@users.noreply.github.com`, so its two commits appear in APareek89's person-level Admin trace. Do not patch historical attribution in SQL.
 - GitHub App installation settings still grant access to both `APareek89/prism` and the lab. Saving that configuration fired the setup callback, which temporarily mirrored both repos and reingested 22 old PRs. The final transaction cleared them again and re-pinned the internal connector/function scopes to only the lab. For a durable GitHub-side guard, remove `APareek89/prism` from installation 143692925 and leave only `prism-measurement-lab`; any future setup callback treats GitHub's selected-repo list as authoritative.
-- Finish the current enrichment rollout: merge the `gh pr create` intent guard, install/trust the Codex hook (new sessions require `/hooks` approval), create one PR through a fresh real Codex session, ingest lab PRs #7–#9, run the pipeline, and verify Admin equations plus `pr_link@0.99` evidence.
+- Finish the current enrichment rollout: merge lab PR #9, create one additional real PR through the repaired Codex hook, ingest lab PRs #7–#10, run the pipeline, and verify Admin equations plus `pr_link@0.99` evidence.
 - `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block hosted auth mail, which uses `AUTH_FROM_EMAIL` or Resend's owner-only default sender. Verify a Resend domain and set both sender variables before inviting the broader team; digest delivery stays off until its sender is configured.
 - Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
 - Add the hosted `/auth/callback` to Supabase Auth redirect URLs as defense-in-depth/fallback, and add the hosted `/api/connectors/github/install` URL to the GitHub App setup/callback configuration.
 - Exact AI-session → repo/branch/PR, verification, context-read, and review-loop evidence still needs the metadata-only Prism Bridge/production adapter.
 - `Loop.MD` remains offered. Full FMEA and paid coaching golden evals require owner approval.
 
-**Session efficiency:** 🎯 ~55% Admin trace + dogfooding evidence · 🔧 ~35% verification/deployment · ⏸ ~10% GitHub installation approval gate
+**Session efficiency:** 🎯 ~50% enrichment + Admin trace · 🔧 ~35% real OTLP/hook verification · 🔁 ~15% timestamp and hook-envelope repair

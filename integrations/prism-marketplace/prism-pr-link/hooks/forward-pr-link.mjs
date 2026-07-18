@@ -16,17 +16,28 @@ function readStdin() {
   });
 }
 
+function responseText(value) {
+  if (typeof value === 'string') return value;
+  try { return JSON.stringify(value); } catch { return ''; }
+}
+
 async function main() {
   const endpoint = process.env.PRISM_INGEST_URL;
   const token = process.env.PRISM_INGEST_TOKEN;
   if (!endpoint || !token) return;
 
   const raw = await readStdin();
-  if (!PR_CREATE_COMMAND_RE.test(raw)) return;
-  const match = PR_URL_RE.exec(raw);
-  if (!match) return;
   let event = {};
-  try { event = JSON.parse(raw); } catch { /* URL extraction is still valid */ }
+  try { event = JSON.parse(raw); } catch { return; }
+  const toolInput = event.tool_input || event.toolInput || {};
+  const command = typeof toolInput.command === 'string'
+    ? toolInput.command
+    : typeof toolInput.cmd === 'string'
+      ? toolInput.cmd
+      : '';
+  if (!PR_CREATE_COMMAND_RE.test(command)) return;
+  const match = PR_URL_RE.exec(responseText(event.tool_response ?? event.toolResponse));
+  if (!match) return;
   const sessionId = event.session_id || event.sessionId || '';
   if (typeof sessionId !== 'string' || !sessionId.trim()) return;
 
