@@ -118,3 +118,13 @@
 **Deepest why type:** `integration`
 **Action taken:** Pin the connector to APareek89 installation `143692925`, verify the installation can list the lab before rerunning, and surface failed steps or soft warnings in the Admin control instead of reporting an unqualified success.
 **Preventive action:** Any destructive connector reset must verify `(installation, repository)` access together before deletion, and every operator-facing pipeline control must render structured warnings.
+
+### 2026-07-18 — The GitHub setup callback expanded a deliberately narrow repo scope
+
+**Symptom:** After the clean lab-only run passed, 22 historical `APareek89/prism` PRs reappeared and the connector listed both repositories.
+**Why 1:** Saving the GitHub App's selected-repository configuration invoked its setup callback after the first reset.
+**Why 2:** The callback intentionally treats every repository accessible to the installation as the new Prism scope.
+**Why 3:** The installation still selected the original repo in addition to the new lab, while the clean-reset requirement existed only in Prism's database scope.
+**Deepest why type:** `integration`
+**Action taken:** Wait for the callback/backfill to finish, repeat the transactional evidence reset, pin connector plus function scopes to only the lab, rerun, and verify the sole persisted repo from the live database.
+**Preventive action:** When the measurement scope must exclude a repository, remove it in GitHub App settings as well as Prism; after every setup callback, validate the authoritative repo list before accepting a backfill.
