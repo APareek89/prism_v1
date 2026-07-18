@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: fcb9e97 · branch: `codex/agentic-insights-top-nav` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 15dbeab · branch: `main` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -20,6 +20,7 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 - ✅ Narrative batches use stable candidate ids, exact score-stamped configuration, per-item grounding, a single repair batch, coherent same-day replacement, provider time/output bounds, and three-lane bounded fan-out. Real full-loop latency fell from 251.1s to 131.8s; score math was not changed.
 - ✅ PR presentation now reads persisted verdict/ref/size metadata, so UUID fragments cannot become PR numbers and “no revert” cannot mislabel a clean PR. My View shows real `#1`–`#10` evidence correctly.
 - ✅ Verification: 317 tests (47 engine + 270 web), workspace typecheck/build, diff check, Mermaid 7/7, authenticated desktop/mobile browser flows with zero console errors, 390px `scrollWidth === innerWidth`, and two successful real-data pipeline runs. Full FMEA is in `docs/FMEA-agentic-insights-top-nav.md`; all P0/P1 findings are resolved. Paid eval was not run.
+- ✅ PR #19 squash-merged as `15dbeab`; Render deploy `dep-d9dtt961a83c73c19ak0` is live at `https://prism-v1.onrender.com`. Production health reports `production` / `demoMode:false` / `db:ok`; authenticated Overview and Admin Agentic Flow pass with zero console errors and 390px no-overflow.
 
 ## Product/architecture decisions
 
@@ -49,5 +50,6 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 - `a05a319` — sync prior shipped handoff to main (#18).
 - `fcb9e97` — agentic insight contract, admin trace, top navigation, privacy-safe organization flow, and full QA/FMEA.
+- `15dbeab` — squash merge of the completed feature and handoff through PR #19; deployed live.
 
 **Session efficiency:** 🎯 55% product/data fixes · 🔧 30% wiring + browser/build QA · 🔁 15% environment/rework
