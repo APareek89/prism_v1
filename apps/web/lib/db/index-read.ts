@@ -335,7 +335,7 @@ interface InsightRowLite {
   date: string;
   scope_id: string;
   created_at: string;
-  subjectName?: string;
+  evidence_jsonb?: unknown;
 }
 
 export async function getImprovements(
@@ -347,11 +347,12 @@ export async function getImprovements(
     const dim = normalizeDimension(row.dimension);
     return {
       rank: i + 1,
-      title: row.subjectName ? `${row.subjectName}: ${row.title}` : row.title,
+      title: row.title,
       body: row.body,
       dimension: dim ?? 'usage',
       tag: dim ? DIMENSION_TAG[dim] : 'cost',
-      impactLabel: impactLabel(row.est_impact, dim),
+      impactLabel: priorityLabel(row.est_impact, dim),
+      detail: insightDetail(row.evidence_jsonb),
     };
   });
 }
@@ -366,19 +367,43 @@ export async function getStrengths(
     const dim = normalizeDimension(row.dimension) ?? 'usage';
     return {
       rank: i + 1,
-      title: row.subjectName ? `${row.subjectName}: ${row.title}` : row.title,
+      title: row.title,
       body: row.body,
       dimension: dim,
       tag: DIMENSION_TAG[dim],
       impactLabel: `supports ${DIMENSION_LABEL[dim]}`,
+      detail: insightDetail(row.evidence_jsonb),
     };
   });
 }
 
-function impactLabel(estImpact: number | null, dim: Dimension | null): string {
+function priorityLabel(estImpact: number | null, dim: Dimension | null): string {
   if (estImpact === null) return '';
-  const signed = estImpact >= 0 ? `+${Math.round(estImpact)}` : `${Math.round(estImpact)}`;
-  return dim ? `${signed} ${DIMENSION_LABEL[dim]}` : `${signed}`;
+  const value = Math.max(0, Math.round(estImpact));
+  return dim ? `priority ${value} · ${DIMENSION_LABEL[dim]}` : `priority ${value}`;
+}
+
+function insightDetail(evidence: unknown): ImprovementDTO['detail'] | undefined {
+  if (!evidence || typeof evidence !== 'object') return undefined;
+  const output = (evidence as { output?: unknown }).output;
+  if (!output || typeof output !== 'object') return undefined;
+  const value = output as Record<string, unknown>;
+  const required = ['observation', 'interpretation', 'alternativeExplanation', 'action', 'expectedSignal', 'verificationPlan', 'doNoHarm'] as const;
+  if (!required.every((key) => typeof value[key] === 'string' && value[key])) return undefined;
+  const confidence = (evidence as { confidence?: unknown }).confidence;
+  const reason = confidence && typeof confidence === 'object' && typeof (confidence as Record<string, unknown>).reason === 'string'
+    ? String((confidence as Record<string, unknown>).reason)
+    : undefined;
+  return {
+    observation: String(value.observation),
+    interpretation: String(value.interpretation),
+    alternativeExplanation: String(value.alternativeExplanation),
+    action: String(value.action),
+    expectedSignal: String(value.expectedSignal),
+    verificationPlan: String(value.verificationPlan),
+    doNoHarm: String(value.doNoHarm),
+    confidenceReason: reason,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -427,7 +452,7 @@ async function scopeInsights(
   // surfaces show the latest run's insights rather than accumulating across days.
   const filter = client
     .from('insights')
-    .select('title, body, dimension, est_impact, kind, rank, date, scope_id, created_at')
+    .select('title, body, dimension, est_impact, kind, rank, date, scope_id, created_at, evidence_jsonb')
     .eq('scope', scope)
     .eq('scope_id', scopeId)
     .eq('kind', kind)
@@ -435,28 +460,6 @@ async function scopeInsights(
     .order('rank', { ascending: true })
     .limit(40) as DbReadFilter;
   let rows = await selectRows(filter) as unknown as InsightRowLite[];
-
-  // The scoring engine publishes function L1/L2 from employee rows but deliberately
-  // does not fabricate function-level KPI rows. Consequently, the narration graph has
-  // real employee insights but no function insight input. Management views aggregate
-  // those real employee narratives and identify the person; no score is recomputed.
-  if (scope === 'function' && rows.length === 0) {
-    const employeeFilter = client
-      .from('insights')
-      .select('title, body, dimension, est_impact, kind, rank, date, scope_id, created_at')
-      .eq('function_id', scopeId)
-      .eq('scope', 'employee')
-      .eq('kind', kind)
-      .order('date', { ascending: false })
-      .order('rank', { ascending: true })
-      .limit(80) as DbReadFilter;
-    rows = await selectRows(employeeFilter) as unknown as InsightRowLite[];
-    if (rows.length) {
-      const names = await selectRows(client.from('employees').select('id,name').eq('function_id', scopeId) as DbReadFilter) as Array<{ id: string; name: string }>;
-      const nameById = new Map(names.map((person) => [person.id, person.name]));
-      rows = rows.map((row) => ({ ...row, subjectName: nameById.get(row.scope_id) }));
-    }
-  }
 
   const latestDate = rows[0]?.date;
   const latest = latestDate ? rows.filter((row) => row.date === latestDate) : [];

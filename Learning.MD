@@ -245,3 +245,38 @@
 **Deepest why type:** `css`
 **Action taken:** Use `minmax(0,1fr)`, set grid children/chart wrappers to `min-width:0`, and constrain SVGs to their container.
 **Preventive action:** Responsive QA must measure document width on real chart data, not infer success from media-query column count.
+
+### 2026-07-18 — Organization insights inherited employee narratives
+
+**Symptom:** Overview could show detailed insight text tied to named people instead of a small set of organization-level signals.
+**Why 1:** The function read layer fell back to recent employee insight rows when function rows were empty.
+**Why 2:** The scoring engine correctly avoids fabricating function KPI rows, but the narration layer had no privacy-safe aggregate input.
+**Deepest why type:** `architecture`
+**Action taken:** Aggregate real active-employee KPI rows into identity-free medians, coverage, and signal totals before organization narration; publish at most three strengths and three opportunities.
+**Preventive action:** An organization prompt must be assembled at organization scope. Lower-scope prose must never be relabeled as an aggregate insight.
+
+### 2026-07-18 — Batched narration needed stable ownership and bounded concurrency
+
+**Symptom:** The live pipeline took 251 seconds, and a missing item in a batch could shift later prose onto the wrong KPI priority.
+**Why 1:** Narrative calls ran once per item and each lane ran serially for every scope.
+**Why 2:** The first batch design still relied on array position after grounding could drop an item.
+**Deepest why type:** `architecture`
+**Action taken:** Batch each lane, fan out the three independent lanes with maximum concurrency three, require exact candidate ids, join persistence by id, and bound provider calls. The real full loop fell to 131.8 seconds without changing score math.
+**Preventive action:** Every structured batch contract needs a stable deterministic identity key; performance QA must measure the real provider path, not only mock tests.
+
+### 2026-07-18 — PR presentation inferred typed facts from UUIDs and prose
+
+**Symptom:** My View could show a UUID fragment as a PR number and classify a clean PR as reverted because its explanation said “no revert.”
+**Why 1:** The read layer scanned arbitrary evidence refs for the first digits and searched combined title/body text for verdict words.
+**Why 2:** Persisted `verdict`, `ref`, and `sizeBucket` metadata existed but was ignored.
+**Deepest why type:** `logic`
+**Action taken:** Decode the typed persisted metadata in one shared helper used by My View and email, with safe legacy fallbacks and regression tests.
+**Preventive action:** Presentation must consume typed facts before attempting legacy inference; UUIDs are identifiers, never display-number evidence.
+
+### 2026-07-18 — Database errors were indistinguishable from empty evidence
+
+**Symptom:** A failed agent/recommendation/admin query could look like an honest no-signal state and allow incomplete downstream work.
+**Why 1:** Loose service-role readers returned an empty array for both query errors and legitimate empty results.
+**Deepest why type:** `code`
+**Action taken:** Propagate database errors, preserve existing accepted rows on provider repair failure, replace same-day snapshots only after successful writes, and stop repeated scope attempts through a circuit breaker.
+**Preventive action:** Every evidence reader must model `error`, `empty`, and `suppressed` as distinct states; only `empty` may drive a no-signal UI.

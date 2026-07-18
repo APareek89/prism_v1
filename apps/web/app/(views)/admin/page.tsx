@@ -4,6 +4,9 @@ import { getAuthUser } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/auth/roles';
 import { getLiveCalculationTrace, type TraceDimension } from '@/lib/admin/calculation-trace';
 import { DIMENSION_HUES, DIMENSION_LABELS } from '@/app/tokens';
+import Link from 'next/link';
+import { getAgenticFlowSnapshot } from '@/lib/admin/agentic-flow';
+import { AgenticFlowPanel } from '@/components/admin/AgenticFlowPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +45,14 @@ function timestamp(value: string | null): string {
 function safeJson(value: Record<string, unknown>): string {
   const text = JSON.stringify(value);
   return text.length > 240 ? `${text.slice(0, 237)}…` : text;
+}
+
+function AdminTabs({ active }: { active: 'calculation' | 'agentic' }) {
+  return <nav className="section-nav admin-section-nav" aria-label="Admin sections">
+    <span className="section-nav-label">Admin</span>
+    <Link href="/admin?tab=calculation" className={active === 'calculation' ? 'active' : ''}><i /><span><strong>Calculation Flow</strong><small>Evidence, formulas, weights, and gates</small></span></Link>
+    <Link href="/admin?tab=agentic" className={active === 'agentic' ? 'active' : ''}><i /><span><strong>Agentic Flow</strong><small>Insight and recommendation reasoning</small></span></Link>
+  </nav>;
 }
 
 function DimensionTrace({ dimension }: { dimension: TraceDimension }) {
@@ -109,6 +120,19 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
   }
 
   const params = await searchParams;
+  const activeTab = scalar(params.tab) === 'agentic' ? 'agentic' : 'calculation';
+  if (activeTab === 'agentic') {
+    const snapshot = await getAgenticFlowSnapshot(user.functionId, scalar(params.subject), scalar(params.artifact));
+    return <div className="page admin-trace-page">
+      <PageHeader
+        kicker="Admin · bounded reasoning audit"
+        title="Trace every published insight and recommendation"
+        description="Inspect deterministic inputs, candidate selection, bounded narration, grounding checks, alternatives, and verification. Recommendations remain rule-owned; agents never compute scores."
+        meta={<><MetaChip label="Artifacts" value={snapshot.artifacts.length} tone="accent" /><MetaChip label="Privacy" value="Authorized scope only" /><MetaChip label="Data" value="Real persisted rows" /></>}
+      />
+      <div className="admin-subview-shell"><AdminTabs active={activeTab} /><div className="subview-stage"><AgenticFlowPanel snapshot={snapshot} /></div></div>
+    </div>;
+  }
   const date = validDate(scalar(params.date));
   const employeeId = scalar(params.employee) ?? user.employeeId;
   const trace = await getLiveCalculationTrace({ functionId: user.functionId, employeeId, date });
@@ -140,7 +164,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
         }
       />
 
+      <div className="admin-subview-shell"><AdminTabs active={activeTab} /><div className="subview-stage">
+
       <form className="admin-trace-filter card" method="get">
+        <input type="hidden" name="tab" value="calculation" />
         <label>Person<select name="employee" defaultValue={trace.person.id}>{trace.people.map((person) => <option value={person.id} key={person.id}>{person.name}{person.githubHandle ? ` · @${person.githubHandle}` : ''}</option>)}</select></label>
         <label>Calculation date<input type="date" name="date" defaultValue={trace.date} /></label>
         <button className="button" type="submit">Load trace</button>
@@ -220,6 +247,7 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
       </section>
 
       <div className="admin-footnote">Temporary Admin tab · service-role reads are executed only after the page verifies your Supabase admin role. Prompt text, responses, source code, commands, and tool payloads are not displayed or stored.</div>
+      </div></div>
     </div>
   );
 }

@@ -23,7 +23,10 @@ export function improvementAreaPrompt(
     '',
     evidenceBlock(state.evidence),
     '',
-    'For each area, in the SAME order, write a short imperative title and one or two ' +
-      'grounded sentences on what to do and why. Cite the evidence ids that support each item.',
+    'For each area, return its exact KPI id as candidateId and the complete coaching contract: a factual ' +
+      'observation, cautious interpretation, one plausible alternative explanation, one ' +
+      'controllable action, the expected leading signal, a verification plan for a later ' +
+      'measured window, and a do-no-harm guardrail. Do not claim causality. For an ' +
+      'organization scope, never identify or imply an individual. Cite exact evidence ids.',
   ].join('\n');
 }

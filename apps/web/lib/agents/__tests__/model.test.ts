@@ -26,7 +26,9 @@ describe('Anthropic model request compatibility', () => {
 
     expect(constructed.fields).toMatchObject({
       temperature: 0,
+      maxTokens: 4096,
       invocationKwargs: { top_p: undefined },
+      clientOptions: { timeout: 45_000, maxRetries: 0 },
     });
   });
 });

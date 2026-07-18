@@ -20,7 +20,9 @@ export function changeGovernancePrompt(state: InsightStateType, deltas: DeltaRow
     '',
     evidenceBlock(state.evidence),
     '',
-    'For each movement, write a short headline naming what changed and one grounded ' +
-      'sentence on why it moved. Cite the supporting evidence ids.',
+    'For each movement, return its exact movement key as candidateId, a factual observation, cautious interpretation, one plausible ' +
+      'alternative explanation, one controllable action, the expected leading signal, a ' +
+      'verification plan, and a do-no-harm guardrail. Never turn correlation into causation. ' +
+      'For an organization scope, never identify or imply an individual. Cite exact evidence ids.',
   ].join('\n');
 }

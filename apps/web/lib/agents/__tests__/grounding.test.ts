@@ -14,7 +14,7 @@ import {
   evidenceIdSet,
   repairNote,
 } from '../grounding';
-import { groundedProduce } from '../nodes/ground-run';
+import { groundedBatchProduce, groundedProduce } from '../nodes/ground-run';
 import { mockImprovementArea, mockChangeGovernance, mockPrLevel } from '../mock-model';
 import { EVIDENCE, EVIDENCE_IDS, USAGE_AREA, EFFICIENCY_DELTA, PR_RECORD_REVERT, PR_EVIDENCE } from './fixtures';
 
@@ -144,13 +144,99 @@ describe('groundedProduce — repair + drop policy', () => {
   });
 });
 
+describe('groundedBatchProduce — one shared repair policy', () => {
+  const groundable = (item: { body: string; evidenceRefs: string[] }) => ({
+    prose: [item.body],
+    evidenceRefs: item.evidenceRefs,
+  });
+
+  it('accepts a valid batch in one production call', async () => {
+    let calls = 0;
+    const out = await groundedBatchProduce(
+      2,
+      async (_note, indexes) => {
+        calls += 1;
+        return indexes.map((index) => ({
+          body: index === 0 ? 'Usage is below target.' : 'Efficiency is holding.',
+          evidenceRefs: [EVIDENCE_IDS[index]!],
+        }));
+      },
+      groundable,
+      EVIDENCE,
+    );
+
+    expect(calls).toBe(1);
+    expect(out.every(Boolean)).toBe(true);
+    expect(out.map((item) => item?.validation.attempts)).toEqual([1, 1]);
+  });
+
+  it('repairs only invalid items in one shared second call', async () => {
+    const calls: number[][] = [];
+    const out = await groundedBatchProduce(
+      3,
+      async (note, indexes) => {
+        calls.push([...indexes]);
+        return indexes.map((index) => ({
+          body: index === 1 && !note ? 'Usage jumped to 999.' : 'Usage is below target.',
+          evidenceRefs: [EVIDENCE_IDS[0]!],
+        }));
+      },
+      groundable,
+      EVIDENCE,
+    );
+
+    expect(calls).toEqual([[0, 1, 2], [1]]);
+    expect(out[0]?.validation.attempts).toBe(1);
+    expect(out[1]?.validation).toMatchObject({ attempts: 2, repaired: true, status: 'accepted' });
+    expect(out[2]?.validation.attempts).toBe(1);
+  });
+
+  it('drops only an item that remains invalid after the shared repair', async () => {
+    let calls = 0;
+    const out = await groundedBatchProduce(
+      2,
+      async (_note, indexes) => {
+        calls += 1;
+        return indexes.map((index) => ({
+          body: index === 1 ? 'Usage is 999.' : 'Usage is below target.',
+          evidenceRefs: [EVIDENCE_IDS[0]!],
+        }));
+      },
+      groundable,
+      EVIDENCE,
+    );
+
+    expect(calls).toBe(2);
+    expect(out[0]).not.toBeNull();
+    expect(out[1]).toBeNull();
+  });
+
+  it('keeps first-pass accepted items when the shared repair call fails', async () => {
+    const out = await groundedBatchProduce(
+      2,
+      async (note, indexes) => {
+        if (note) throw new Error('provider unavailable during repair');
+        return indexes.map((index) => ({
+          body: index === 1 ? 'Usage is 999.' : 'Usage is below target.',
+          evidenceRefs: [EVIDENCE_IDS[0]!],
+        }));
+      },
+      groundable,
+      EVIDENCE,
+    );
+
+    expect(out[0]).not.toBeNull();
+    expect(out[1]).toBeNull();
+  });
+});
+
 describe('mock-model narration is always grounding-clean', () => {
   it('improvement-area mock passes its own gate', () => {
     const out = mockImprovementArea([USAGE_AREA], EVIDENCE);
     const allowed = buildAllowedNumbers(EVIDENCE, [USAGE_AREA.norm, USAGE_AREA.target]);
     const ids = evidenceIdSet(EVIDENCE);
     for (const item of out.items) {
-      const r = checkGrounding([item.title, item.body], item.evidenceRefs, allowed, ids);
+      const r = checkGrounding([item.title, item.observation, item.interpretation, item.alternativeExplanation, item.action, item.expectedSignal, item.verificationPlan, item.doNoHarm], item.evidenceRefs, allowed, ids);
       expect(r.ok).toBe(true);
     }
   });
@@ -160,7 +246,7 @@ describe('mock-model narration is always grounding-clean', () => {
     const allowed = buildAllowedNumbers(EVIDENCE, [EFFICIENCY_DELTA.latest, EFFICIENCY_DELTA.baseline, EFFICIENCY_DELTA.delta]);
     const ids = evidenceIdSet(EVIDENCE);
     for (const d of out.drivers) {
-      const r = checkGrounding([d.title, d.body], d.evidenceRefs, allowed, ids);
+      const r = checkGrounding([d.title, d.observation, d.interpretation, d.alternativeExplanation, d.action, d.expectedSignal, d.verificationPlan, d.doNoHarm], d.evidenceRefs, allowed, ids);
       expect(r.ok).toBe(true);
     }
   });

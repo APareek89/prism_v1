@@ -31,6 +31,7 @@ import {
 } from '@/lib/db/_base';
 import { DIMENSION_HUES } from '@/app/tokens';
 import type { ConfidenceBandName } from '@/lib/ui/view-models';
+import { decodePrInsight } from '@/lib/pr-insight';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public shape — the fully-computed input the template renders. Every number is
@@ -224,38 +225,11 @@ async function prLevelInsights(employeeId: string, date: string): Promise<Insigh
   return raw as unknown as InsightRow[];
 }
 
-// verdict class derived deterministically from the insight text/dimension — matches
-// lib/db/member.ts::inferFlag so the digest and the My-view PR list agree.
-function inferFlag(title: string, body: string): DigestPrCallout['flag'] {
-  const t = `${title} ${body}`.toLowerCase();
-  if (t.includes('revert')) return 'revert';
-  if (t.includes('slop')) return 'ai-slop';
-  if (t.includes('re-prompt') || t.includes('reprompt') || t.includes('iteration')) return 're-prompt';
-  return 'clean';
-}
 function flagTone(flag: DigestPrCallout['flag']): DigestPrCallout['flagTone'] {
   if (flag === 'clean') return 'ok';
   if (flag === 'revert' || flag === 'ai-slop') return 'bad';
   return 'warn';
 }
-function evidenceRefs(evidence: unknown): string[] {
-  if (Array.isArray(evidence)) return evidence.filter((v): v is string => typeof v === 'string');
-  if (evidence && typeof evidence === 'object') {
-    const refs = (evidence as { refs?: unknown }).refs;
-    if (Array.isArray(refs)) return refs.filter((v): v is string => typeof v === 'string');
-    const pr = (evidence as { pr_number?: unknown; prNumber?: unknown }).pr_number ??
-      (evidence as { prNumber?: unknown }).prNumber;
-    if (typeof pr === 'number' || typeof pr === 'string') return [`#${pr}`];
-  }
-  return [];
-}
-function extractPrNumber(refs: string[]): string {
-  const hit = refs.find((r) => /#?\d+/.test(r));
-  if (!hit) return '';
-  const m = hit.match(/\d+/);
-  return m ? `#${m[0]}` : '';
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // recommendations (top OPEN rec) + course (active assignment)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -414,9 +388,10 @@ export async function buildDigestInput(
   const prCallouts: DigestPrCallout[] = insightRows.slice(0, 3).map((row) => {
     const title = row.title ?? '';
     const body = row.body ?? '';
-    const flag = inferFlag(title, body);
+    const decoded = decodePrInsight(row.evidence_jsonb, title, body);
+    const flag = decoded.flag;
     return {
-      prNumber: extractPrNumber(evidenceRefs(row.evidence_jsonb)),
+      prNumber: decoded.prNumber ?? '',
       flag,
       flagTone: flagTone(flag),
       title,

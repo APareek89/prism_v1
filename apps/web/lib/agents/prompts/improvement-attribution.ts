@@ -22,7 +22,10 @@ export function improvementAttributionPrompt(
     '',
     evidenceBlock(state.evidence),
     '',
-    'For each strength, in the SAME order, write a short headline and one grounded sentence ' +
-      'attributing the win to a cause. Cite the supporting evidence ids.',
+    'For each strength, return its exact KPI id as candidateId and the complete coaching contract: a factual ' +
+      'observation, cautious interpretation, one plausible alternative explanation, one ' +
+      'action that protects the strength, the expected leading signal, a verification plan, ' +
+      'and a do-no-harm guardrail. Do not claim causality. For an organization scope, never ' +
+      'identify or imply an individual. Cite exact evidence ids.',
   ].join('\n');
 }

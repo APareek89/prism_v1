@@ -21,6 +21,7 @@ import {
   openRecsFor,
 } from './store';
 import type { RuleContext, RuleOutput } from './types';
+import { ACTIVE_RECOMMENDATION_LIMIT } from './contract';
 
 export interface DeriveResult {
   functionId: string;
@@ -32,6 +33,8 @@ export interface DeriveResult {
   inserted: number;
   /** candidates skipped because an OPEN rec already exists for (employee, kind, ref). */
   skippedExisting: number;
+  /** candidates not inserted because the employee already had the active coaching cap. */
+  skippedCapacity: number;
   errors: string[];
 }
 
@@ -63,6 +66,7 @@ export async function deriveAndStoreRecommendations(
   let candidates = 0;
   let inserted = 0;
   let skippedExisting = 0;
+  let skippedCapacity = 0;
 
   for (const emp of employees) {
     let ctx: RuleContext;
@@ -78,18 +82,34 @@ export async function deriveAndStoreRecommendations(
 
     // Dedupe against existing OPEN recs AND within this run (a rule family can only fire
     // one ref, but guard anyway so a re-run never double-inserts).
-    const open = await openRecsFor(emp.id).catch(() => []);
+    let open: Awaited<ReturnType<typeof openRecsFor>>;
+    try {
+      open = await openRecsFor(emp.id);
+    } catch (e) {
+      errors.push(`openRecsFor(${emp.id}): ${e instanceof Error ? e.message : String(e)}`);
+      continue;
+    }
     const taken = new Set(open.map((r) => slot(r.kind, r.ref)));
+    let availableSlots = Math.max(0, ACTIVE_RECOMMENDATION_LIMIT - open.length);
 
-    for (const out of fired) {
+    for (const [candidateIndex, candidate] of fired.entries()) {
+      const out: RuleOutput = {
+        ...candidate,
+        selection: { rank: candidateIndex + 1, candidateCount: fired.length, activeLimit: ACTIVE_RECOMMENDATION_LIMIT },
+      };
       const key = slot(out.kind, out.ref);
       if (taken.has(key)) {
         skippedExisting += 1;
         continue;
       }
+      if (availableSlots <= 0) {
+        skippedCapacity += 1;
+        continue;
+      }
       const res = await insertRec(functionId, emp.id, date, out);
       if (res.ok) {
         inserted += 1;
+        availableSlots -= 1;
         taken.add(key); // prevent an intra-run dup
       } else {
         // A unique-violation here means a concurrent open rec exists → treat as skip, not error.
@@ -110,6 +130,7 @@ export async function deriveAndStoreRecommendations(
     candidates,
     inserted,
     skippedExisting,
+    skippedCapacity,
     errors,
   };
 }

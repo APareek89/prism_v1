@@ -50,7 +50,9 @@ async function makeClient(model: string, temperature: number): Promise<ChatAnthr
     apiKey,
     model,
     temperature,
+    maxTokens: 4096,
     maxRetries: 1,
+    clientOptions: { timeout: 45_000, maxRetries: 0 },
     // @langchain/anthropic 0.3.x defaults unknown/new model ids to topP=-1.
     // Anthropic's current Messages API rejects that sentinel. An explicit
     // undefined override keeps top_p out of the serialized request while leaving

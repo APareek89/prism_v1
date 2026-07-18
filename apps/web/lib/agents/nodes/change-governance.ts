@@ -16,7 +16,7 @@ import { changeGovernancePrompt } from '../prompts/change-governance';
 import { SYSTEM_PROMPT } from '../prompts/system';
 import { structured, narrator, shouldUseRealModel } from '../model';
 import { mockChangeGovernance } from '../mock-model';
-import { groundedProduce } from './ground-run';
+import { groundedBatchProduce } from './ground-run';
 
 export async function changeGovernanceNode(
   state: InsightStateType,
@@ -28,46 +28,51 @@ export async function changeGovernanceNode(
     ? structured(narrator, ChangeGovernanceSchema, 'change_governance')
     : null;
 
+  const extraNumbers = deltas.flatMap((d) => [d.latest, d.baseline, d.delta]);
+  const produced = await groundedBatchProduce(
+    deltas.length,
+    async (note, indexes) => {
+      const selected = indexes.map((index) => deltas[index]!);
+      if (!runner) return mockChangeGovernance(selected, state.evidence).drivers;
+      const prompt = note
+        ? `${changeGovernancePrompt(state, selected)}\n\n${note}`
+        : changeGovernancePrompt(state, selected);
+      const drivers = (await runner.invoke(SYSTEM_PROMPT, prompt)).drivers;
+      return selected.map((delta) => drivers.find((item) => item.candidateId === delta.key));
+    },
+    (item) => ({
+      prose: [item.title, item.observation, item.interpretation, item.alternativeExplanation, item.action, item.expectedSignal, item.verificationPlan, item.doNoHarm],
+      evidenceRefs: item.evidenceRefs,
+    }),
+    state.evidence,
+    extraNumbers,
+  );
+
   const drivers: ChangeDriver[] = [];
   const insights: AgentInsight[] = [];
-  const extraNumbers = deltas.flatMap((d) => [d.latest, d.baseline, d.delta]);
-
-  for (const d of deltas) {
-    const single = [d];
-    const produced = await groundedProduce(
-      async (note) => {
-        if (runner) {
-          const prompt = note
-            ? `${changeGovernancePrompt(state, single)}\n\n${note}`
-            : changeGovernancePrompt(state, single);
-          const out = await runner.invoke(SYSTEM_PROMPT, prompt);
-          return out.drivers[0] ?? mockChangeGovernance(single, state.evidence).drivers[0]!;
-        }
-        return mockChangeGovernance(single, state.evidence).drivers[0]!;
-      },
-      (item) => ({ prose: [item.title, item.body], evidenceRefs: item.evidenceRefs }),
-      state.evidence,
-      extraNumbers,
-    );
-
-    if (produced) {
-      const dimension = d.dimension ?? 'usage';
-      drivers.push({
-        dimension,
-        direction: d.direction === 'flat' ? 'up' : d.direction,
-        title: produced.title,
-        body: produced.body,
-        evidenceRefs: produced.evidenceRefs,
-      });
-      insights.push({
-        kind: 'change_governance',
-        title: produced.title,
-        body: produced.body,
-        dimension: d.dimension,
-        evidenceRefs: produced.evidenceRefs,
-      });
-    }
-  }
+  produced.forEach((result, index) => {
+    if (!result) return;
+    const item = result.item;
+    const delta = deltas[index]!;
+    const dimension = delta.dimension ?? 'usage';
+    drivers.push({
+      dimension,
+      direction: delta.direction === 'flat' ? 'up' : delta.direction,
+      title: item.title,
+      body: `${item.observation} ${item.interpretation}`,
+      evidenceRefs: item.evidenceRefs,
+    });
+    insights.push({
+      kind: 'change_governance',
+      candidateId: item.candidateId,
+      title: item.title,
+      body: `${item.observation} ${item.interpretation}`,
+      dimension: delta.dimension,
+      evidenceRefs: item.evidenceRefs,
+      analysis: item,
+      validation: result.validation,
+    });
+  });
 
   return { drivers, insights };
 }

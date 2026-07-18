@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 547528a · branch: `main` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: fcb9e97 · branch: `codex/agentic-insights-top-nav` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -14,7 +14,12 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 - ✅ Telemetry audit shipped: historical GPT-5.6 sessions are real but persisted with zero counters because the privacy normalizer missed Codex `*_token_count`/`slug` attributes. New events capture them without cache double-counting; unrecoverable history says “Counters not captured.” Real Claude history also exists for the owner.
 - ✅ Selected calendar comparisons preserve prior-only providers, associate verified links with the PR merge window, and wait for complete real baselines. Daily becomes comparable on the next measured day; weekly/monthly need 7/30-day prior coverage.
 - ✅ Local, remote/cloud workstation, centrally managed, and Claude Code on Vertex guidance is live. The installer runs where the coding agent executes; it does not collect OpenAI-hosted Codex cloud activity.
-- ✅ Verification: 310 tests, workspace typecheck/lint/build, diff check, authenticated local + production browser flows with zero console errors, and 390px checks for Overview, Configure, My View Connection/Performance. Render deploy `dep-d9dq5drbc2fs73fjb8q0` is live with `production`/`demoMode:false`/`db:ok`.
+- ✅ `codex/agentic-insights-top-nav` is feature-complete locally: primary navigation is a responsive top bar; contextual section rails remain for My View, My Actions, Configuration, and Admin; the “My Engineering” badge/sidebar are gone.
+- ✅ Organization insights now come from privacy-safe aggregate KPI facts only (maximum 3 strengths + 3 opportunities). Private My View insights expose observation, interpretation, alternative explanation, controllable action, expected signal, verification, guardrail, and confidence reason.
+- ✅ Admin → Agentic Flow selects a real organization/person and persisted insight/recommendation, then shows candidate ownership, stage ledger, evidence snapshot, grounding validation, and the complete output contract. Seven validated Mermaid sources document all major flows.
+- ✅ Narrative batches use stable candidate ids, exact score-stamped configuration, per-item grounding, a single repair batch, coherent same-day replacement, provider time/output bounds, and three-lane bounded fan-out. Real full-loop latency fell from 251.1s to 131.8s; score math was not changed.
+- ✅ PR presentation now reads persisted verdict/ref/size metadata, so UUID fragments cannot become PR numbers and “no revert” cannot mislabel a clean PR. My View shows real `#1`–`#10` evidence correctly.
+- ✅ Verification: 317 tests (47 engine + 270 web), workspace typecheck/build, diff check, Mermaid 7/7, authenticated desktop/mobile browser flows with zero console errors, 390px `scrollWidth === innerWidth`, and two successful real-data pipeline runs. Full FMEA is in `docs/FMEA-agentic-insights-top-nav.md`; all P0/P1 findings are resolved. Paid eval was not run.
 
 ## Product/architecture decisions
 
@@ -23,7 +28,10 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 - 2026-07-18 — Missing evidence is insufficient/unavailable, never zero or synthetic; non-positive provider timestamps fall back to observed/receipt time.
 - 2026-07-18 — Configuration is sequential/audited; index versions are append-only; roles are server-enforced; operating filters never recompute the published index.
 - 2026-07-18 — Codex cached tokens are a subset of input: persist non-cached input plus cache-read separately so totals count each token once.
-- 2026-07-18 — Management insights may roll up latest real employee narratives when no function KPI narrative exists; the rollup identifies the person and never computes a score.
+- 2026-07-18 — Organization prompts receive aggregate KPI medians/coverage/signal totals only; employee ids and employee narratives are forbidden at that boundary.
+- 2026-07-18 — Agent prose must carry the exact deterministic candidate id. Position is never ownership; unsupported items repair once or drop without shifting another candidate's math.
+- 2026-07-18 — Insight priority uses the exact config version stamped on the current score. Agents remain narrative-only and never compute or change the score.
+- 2026-07-18 — Independent opportunity/change/strength lanes may run concurrently with a hard maximum of three; real-provider calls are bounded to 45 seconds and 4,096 output tokens.
 
 ## Hard boundaries
 
@@ -34,6 +42,12 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 - Owner confirms Data processing and unchanged Index v1, then repository/people/access configuration; no consent step is auto-approved.
 - GitHub safeguard: at `https://github.com/settings/installations/143692925`, leave only `APareek89/prism-measurement-lab`; GitHub-selected repos remain authoritative on setup callbacks.
-- Verify a Resend domain before team rollout; `DIGEST_FROM_EMAIL` remains blank. Full FMEA/paid evals require explicit owner approval.
+- Verify a Resend domain before team rollout; `DIGEST_FROM_EMAIL` remains blank. Paid evals still require separate explicit owner approval.
+- P2 hardening from the completed FMEA: durable grounding-drop counters, a cross-process function/date pipeline lock, and an atomic active-recommendation capacity check.
+
+## Recent commits
+
+- `a05a319` — sync prior shipped handoff to main (#18).
+- `fcb9e97` — agentic insight contract, admin trace, top navigation, privacy-safe organization flow, and full QA/FMEA.
 
 **Session efficiency:** 🎯 55% product/data fixes · 🔧 30% wiring + browser/build QA · 🔁 15% environment/rework

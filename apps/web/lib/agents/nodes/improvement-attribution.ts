@@ -15,51 +15,52 @@ import { improvementAttributionPrompt } from '../prompts/improvement-attribution
 import { SYSTEM_PROMPT } from '../prompts/system';
 import { structured, narrator, shouldUseRealModel } from '../model';
 import { mockImprovementAttribution } from '../mock-model';
-import { groundedProduce } from './ground-run';
+import { groundedBatchProduce } from './ground-run';
 
 export async function improvementAttributionNode(
   state: InsightStateType,
 ): Promise<InsightStateUpdate> {
-  const strengths = rankStrengths(state.valuesVsAnchor);
+  const strengths = rankStrengths(state.valuesVsAnchor, state.scope === 'function' ? 3 : 4);
   if (strengths.length === 0) return { insights: [] };
 
   const runner = shouldUseRealModel()
     ? structured(narrator, ImprovementAttributionSchema, 'improvement_attribution')
     : null;
 
-  const insights: AgentInsight[] = [];
   const extraNumbers = strengths.flatMap((s) => [s.norm, s.target]);
+  const produced = await groundedBatchProduce(
+    strengths.length,
+    async (note, indexes) => {
+      const selected = indexes.map((index) => strengths[index]!);
+      if (!runner) return mockImprovementAttribution(selected, state.evidence).items;
+      const prompt = note
+        ? `${improvementAttributionPrompt(state, selected)}\n\n${note}`
+        : improvementAttributionPrompt(state, selected);
+      const items = (await runner.invoke(SYSTEM_PROMPT, prompt)).items;
+      return selected.map((strength) => items.find((item) => item.candidateId === strength.kpiId));
+    },
+    (item) => ({
+      prose: [item.title, item.observation, item.interpretation, item.alternativeExplanation, item.action, item.expectedSignal, item.verificationPlan, item.doNoHarm],
+      evidenceRefs: item.evidenceRefs,
+    }),
+    state.evidence,
+    extraNumbers,
+  );
 
-  for (const s of strengths) {
-    const single = [s];
-    const produced = await groundedProduce(
-      async (note) => {
-        if (runner) {
-          const prompt = note
-            ? `${improvementAttributionPrompt(state, single)}\n\n${note}`
-            : improvementAttributionPrompt(state, single);
-          const out = await runner.invoke(SYSTEM_PROMPT, prompt);
-          return (
-            out.items[0] ?? mockImprovementAttribution(single, state.evidence).items[0]!
-          );
-        }
-        return mockImprovementAttribution(single, state.evidence).items[0]!;
-      },
-      (item) => ({ prose: [item.title, item.body], evidenceRefs: item.evidenceRefs }),
-      state.evidence,
-      extraNumbers,
-    );
-
-    if (produced) {
-      insights.push({
-        kind: 'improvement_attribution',
-        title: produced.title,
-        body: produced.body,
-        dimension: s.dimension,
-        evidenceRefs: produced.evidenceRefs,
-      });
-    }
-  }
+  const insights: AgentInsight[] = produced.flatMap((result, index) => {
+    if (!result) return [];
+    const item = result.item;
+    return [{
+      kind: 'improvement_attribution',
+      candidateId: item.candidateId,
+      title: item.title,
+      body: `${item.observation} ${item.interpretation}`,
+      dimension: strengths[index]!.dimension,
+      evidenceRefs: item.evidenceRefs,
+      analysis: item,
+      validation: result.validation,
+    }];
+  });
 
   return { insights };
 }
