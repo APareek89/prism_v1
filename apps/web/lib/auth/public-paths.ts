@@ -8,6 +8,7 @@ const PUBLIC_PATHS = [
   // an HTML sign-in redirect.
   '/api/connect/telemetry/install',
   '/api/connect/telemetry/otel',
+  '/api/connect/telemetry/pr-link',
 ] as const;
 
 export function isPublicPath(pathname: string): boolean {

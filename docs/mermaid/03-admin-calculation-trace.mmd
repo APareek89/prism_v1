@@ -1,5 +1,5 @@
 %% Prism temporary Admin calculation trace
-%% verified: 2026-07-18 live read-only replay against existing scoring engine
+%% verified: 2026-07-18 equation-level replay + PR-link evidence
 %% files: apps/web/app/(views)/admin/page.tsx, apps/web/lib/admin/calculation-trace.ts, apps/web/lib/pipeline/assemble.ts, apps/web/lib/scoring/compute-daily.ts, apps/web/lib/agents/index.ts
 %% granularity: master
 flowchart LR
@@ -8,9 +8,9 @@ flowchart LR
   D[("GitHub + telemetry evidence<br/>DATA · real rows only")] --> C
   C --> E["computeDaily<br/>FUNCTION · unchanged deterministic engine"]
   E --> F["Calculation presenter<br/>FUNCTION · read-only explanation"]
-  F --> G["KPI trace<br/>raw → normalized → weighted contribution"]
-  F --> H["Dimension trace<br/>effective weights → L1 → confidence + gates"]
-  D --> I["Evidence timeline<br/>commits + PRs + sessions + links"]
+  F --> G["KPI equations<br/>raw operands → anchor map → weighted vote"]
+  F --> H["Dimension equations<br/>L2 → L1 → confidence → publish + band gates"]
+  D --> I["Evidence timeline<br/>commits + PRs + sessions + verified PR beacons + links"]
   J[("Persisted narratives<br/>DATA · insights + recommendations")] --> K["Agent output panel<br/>FUNCTION · narration only"]
   G --> L["Admin course correction<br/>TERM · inspect, then rerun pipeline"]
   H --> L

@@ -1,16 +1,16 @@
 // lib/connectors/link/ai-to-pr.ts
 //
 // The AI→PR link step (PRD §6, migration 0010 pr_ai_link). For every merged PR in the
-// trailing ingest window, find candidate Claude Code sessions by branch / sha /
-// coauthor, score the strongest signal (lib/connectors/link/match-keys), and persist:
+// trailing ingest window, find candidate Codex/Claude Code sessions by verified PR
+// beacon / branch / sha / coauthor, score the strongest signal, and persist:
 //   • pr_ai_link(pr_id, cc_session_id, method, confidence, function_id)  — UPSERT on
 //     the UNIQUE(pr_id, cc_session_id) constraint.
 //   • gh_prs.ai_assisted = true  for every linked PR.
 //   • cc_sessions.linked_pr = <pr id>  for every linked session.
 //
-// CORRELATIONAL ONLY — this association never feeds the AI-Native Index; it powers the
-// "AI-assisted" badge + the correlational lens. Writes via the SERVICE-ROLE client.
-// Never throws the pipeline out — collects errors into the returned stats.
+// The linker does not calculate a score. It enriches gh_prs.ai_assisted, which the
+// unchanged assembler and deterministic scoring engine may consume as existing input.
+// Writes via the SERVICE-ROLE client. Never throws the pipeline out — collects errors.
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ingestWindow } from '@/lib/connectors/window';
@@ -53,10 +53,21 @@ interface PrRow {
 }
 interface SessionRow {
   id: string;
+  connection_id: string | null;
+  session_id: string | null;
   repo: string | null;
   branch: string | null;
   /** jsonb array of {repo, number} from Claude Code `pr-link` events (migration 0033). */
   pr_refs: Array<{ repo?: string; number?: number }> | null;
+}
+interface PrLinkEvidenceRow {
+  id: string;
+  connection_id: string;
+  source_session_id: string;
+  repo: string;
+  pr_number: number;
+  sha: string | null;
+  branch: string | null;
 }
 interface CommitRow {
   pr_id: string | null;
@@ -69,6 +80,8 @@ interface CommitRow {
 /** Accounting for one link run. */
 export interface LinkStats {
   prsConsidered: number;
+  prLinkEvidenceRead: number;
+  prLinkEvidenceMatched: number;
   linksWritten: number;
   prsMarked: number;
   sessionsMarked: number;
@@ -76,7 +89,15 @@ export interface LinkStats {
 }
 
 function emptyStats(): LinkStats {
-  return { prsConsidered: 0, linksWritten: 0, prsMarked: 0, sessionsMarked: 0, errors: [] };
+  return {
+    prsConsidered: 0,
+    prLinkEvidenceRead: 0,
+    prLinkEvidenceMatched: 0,
+    linksWritten: 0,
+    prsMarked: 0,
+    sessionsMarked: 0,
+    errors: [],
+  };
 }
 
 /** A Claude co-author trailer marks AI authorship (case-insensitive contains). */
@@ -121,12 +142,13 @@ export async function linkAiToPr(functionId: string, now: Date = new Date()): Pr
   stats.prsConsidered = prs.length;
   if (prs.length === 0) return stats;
 
-  // 2. Candidate sessions for this function (branch/repo bound).
+  // 2. Candidate sessions for this function. A PR beacon is only allowed to enrich
+  //    the exact (connection_id, provider session_id) pair that authenticated it.
   let sessions: SessionRow[] = [];
   try {
     const { data, error } = await db
       .from('cc_sessions')
-      .select('id, repo, branch, pr_refs')
+      .select('id, connection_id, session_id, repo, branch, pr_refs')
       .eq('function_id', functionId);
     if (error) {
       stats.errors.push(`cc_sessions read: ${error.message ?? 'unknown'}`);
@@ -136,6 +158,22 @@ export async function linkAiToPr(functionId: string, now: Date = new Date()): Pr
   } catch (e) {
     stats.errors.push(`cc_sessions read: ${e instanceof Error ? e.message : 'unknown'}`);
     return stats;
+  }
+
+  let prLinkEvidence: PrLinkEvidenceRow[] = [];
+  try {
+    const { data, error } = await db
+      .from('pr_link_ingest')
+      .select('id, connection_id, source_session_id, repo, pr_number, sha, branch')
+      .eq('function_id', functionId);
+    if (error) {
+      stats.errors.push(`pr_link_ingest read: ${error.message ?? 'unknown'}`);
+    } else {
+      prLinkEvidence = Array.isArray(data) ? (data as PrLinkEvidenceRow[]) : [];
+      stats.prLinkEvidenceRead = prLinkEvidence.length;
+    }
+  } catch (e) {
+    stats.errors.push(`pr_link_ingest read: ${e instanceof Error ? e.message : 'unknown'}`);
   }
   if (sessions.length === 0) return stats;
 
@@ -168,18 +206,46 @@ export async function linkAiToPr(functionId: string, now: Date = new Date()): Pr
     row: SessionRow;
     prRefs: PrRef[];
     knownRepos: Set<string>; // lower-cased owner/repo slugs from prRefs
+    shas: string[];
+    branch: string | null;
   }
+  const evidenceByConnectionSession = new Map<string, PrLinkEvidenceRow[]>();
+  for (const evidence of prLinkEvidence) {
+    const key = `${evidence.connection_id}\u0000${evidence.source_session_id}`;
+    const list = evidenceByConnectionSession.get(key) ?? [];
+    list.push(evidence);
+    evidenceByConnectionSession.set(key, list);
+  }
+  const matchedEvidenceIds = new Set<string>();
   const cands: SessionCand[] = sessions.map((s) => {
     const prRefs: PrRef[] = [];
     const knownRepos = new Set<string>();
+    const shas: string[] = [];
     for (const r of s.pr_refs ?? []) {
       if (typeof r?.repo === 'string' && typeof r?.number === 'number' && Number.isFinite(r.number)) {
         prRefs.push({ repo: r.repo, number: r.number });
         knownRepos.add(r.repo.trim().toLowerCase());
       }
     }
-    return { row: s, prRefs, knownRepos };
+    const key = s.connection_id && s.session_id
+      ? `${s.connection_id}\u0000${s.session_id}`
+      : null;
+    const matchedEvidence = key ? (evidenceByConnectionSession.get(key) ?? []) : [];
+    for (const evidence of matchedEvidence) {
+      prRefs.push({ repo: evidence.repo, number: evidence.pr_number });
+      knownRepos.add(evidence.repo.trim().toLowerCase());
+      if (evidence.sha) shas.push(evidence.sha);
+      matchedEvidenceIds.add(evidence.id);
+    }
+    return {
+      row: s,
+      prRefs,
+      knownRepos,
+      shas,
+      branch: s.branch ?? matchedEvidence.find((evidence) => evidence.branch)?.branch ?? null,
+    };
   });
+  stats.prLinkEvidenceMatched = matchedEvidenceIds.size;
 
   const linkRows: Array<{
     function_id: string;
@@ -214,10 +280,8 @@ export async function linkAiToPr(functionId: string, now: Date = new Date()): Pr
       const repoScoped = prRepoNorm.length > 0 && c.knownRepos.has(prRepoNorm);
       const sessionKeys: SessionKeys = {
         prRefs: c.prRefs,
-        branch: repoScoped ? c.row.branch : null,
-        // The local-file session path has no commit SHAs; coauthor falls back to the
-        // PR-side trailer presence. A SHA-bearing session (OTEL) would populate shas.
-        shas: undefined,
+        branch: repoScoped ? c.branch : null,
+        shas: c.shas,
         hasCoauthorTrailer: repoScoped && prHasCoauthor,
       };
       const match = scoreMatch(prKeys, sessionKeys);

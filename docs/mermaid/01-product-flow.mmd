@@ -1,10 +1,12 @@
 %% Prism product decision flow
-%% verified: 2026-07-17 real-only workspace rebuild
+%% verified: 2026-07-18 metadata-only PR-link enrichment
 %% files: apps/web/components/layout/AppShell.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/team/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/configure/page.tsx, apps/web/lib/db/index.ts
 %% granularity: master
 flowchart LR
   K["GitHub App<br/>FUNCTION · real team + delivery"] --> A["public evidence<br/>DATA · real rows only"]
   L["Supabase-linked developer<br/>FUNCTION · exact email claim"] --> M["Personal OTEL setup<br/>FUNCTION · Codex or Claude Code"]
+  M --> N["Provider hook bridge<br/>FUNCTION · session → repo#PR only"]
+  N --> A
   M --> A
   A --> B["Deterministic engine<br/>MAIN + HARNESS + evidence"]
   B --> C[("Who is looking?<br/>FUNCTION · route + role context")]
@@ -18,7 +20,7 @@ flowchart LR
   H --> I["Action<br/>recommendation + owner + adoption"]
   G --> J["New config version<br/>full deterministic recompute"]
   J --> B
-  class K,L,M,B,H,J fn;
+  class K,L,M,N,B,H,J fn;
   class A data;
   class C dec;
   class D,E,F,G,I term;

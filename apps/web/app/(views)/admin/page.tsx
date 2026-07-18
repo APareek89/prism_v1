@@ -63,6 +63,12 @@ function DimensionTrace({ dimension }: { dimension: TraceDimension }) {
         <span>Effective vote <b>{dimension.effectiveVotePct}%</b></span>
         <span>L1 contribution <b>{fmt(dimension.contributionToL1)}</b></span>
       </div>
+      <div className="admin-equation-block">
+        <span>L2 weighted mean · available KPI weight {dimension.availableKpiWeightPct}%</span>
+        <code>{dimension.scoreEquation}</code>
+        <span>L1 contribution · confidence vote {dimension.confidenceWeightPct}%</span>
+        <code>{dimension.l1ContributionEquation}</code>
+      </div>
       <div className="admin-kpi-list">
         {dimension.kpis.length === 0 ? <p className="admin-empty-inline">No scoreable KPI rows yet.</p> : dimension.kpis.map((kpi) => (
           <details className="admin-kpi" key={kpi.id} open={kpi.signals > 0}>
@@ -80,6 +86,9 @@ function DimensionTrace({ dimension }: { dimension: TraceDimension }) {
               <div><span>Configured KPI weight</span><b>{kpi.configuredWeightPct}%</b></div>
               <div><span>Effective KPI vote</span><b>{kpi.effectiveVotePct}%</b></div>
               <div><span>L2 contribution</span><b>{fmt(kpi.contribution)}</b></div>
+              <div className="admin-kpi-equation"><span>Raw evidence arithmetic</span><code>{kpi.rawEquation}</code></div>
+              <div className="admin-kpi-equation"><span>Anchor normalization</span><code>{kpi.normalizationEquation}</code></div>
+              <div className="admin-kpi-equation"><span>Weighted L2 vote</span><code>{kpi.weightedEquation}</code></div>
               <code>{kpi.source}</code>
             </div>
           </details>
@@ -152,6 +161,16 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
         </div>
       </section>
 
+      <section className="admin-math-proof card">
+        <div className="cardhead"><div><span className="page-kicker">Equation ledger</span><h3>The exact path from L2 values to published level</h3></div><span className="sub">presentation of the unchanged engine result</span></div>
+        <div className="admin-math-proof-grid">
+          <article><span>1 · Pre-confidence L1</span><strong>{fmt(trace.member.preConfidenceL1)}</strong><code>{trace.member.l1Equation}</code><small>Available dimension weight: {trace.member.availableDimensionWeightPct}%</small></article>
+          <article><span>2 · Confidence</span><strong>{confidencePct}%</strong><code>{trace.member.confidenceEquation}</code><small>Dimension weights qualify only after their signal minimum is met.</small></article>
+          <article><span>3 · Publication</span><strong>{fmt(trace.member.l1)}</strong><code>{trace.member.publicationEquation}</code><small>The 40% threshold suppresses weak totals; it does not substitute zero.</small></article>
+          <article><span>4 · Band gates</span><strong>{trace.member.band}</strong><code>{trace.member.bandEquation}</code><small>L0 adoption and L5 multiplier gates run after confidence.</small></article>
+        </div>
+      </section>
+
       <section className="admin-flow card">
         <div className="cardhead"><div><span className="page-kicker">Event → score</span><h3>What happens when you commit</h3></div><span className="sub">a commit alone does not directly add points</span></div>
         <div className="admin-flow-steps">
@@ -184,6 +203,10 @@ export default async function AdminPage({ searchParams }: { searchParams: Search
         <div className="card admin-evidence-card">
           <div className="cardhead"><div><span className="page-kicker">Coding-agent evidence</span><h3>{trace.counts.sessions} sessions</h3></div><span className="sub">metadata only</span></div>
           {trace.sessions.length === 0 ? <p className="admin-empty-inline">No Codex or Claude Code sessions in the measurement window.</p> : <div className="admin-event-list">{trace.sessions.slice(0, 30).map((session) => <article key={`${session.provider}:${session.sessionId}`}><b>{session.provider === 'codex' ? 'CX' : 'CC'}</b><div><strong>{session.turns} turns · {session.tokensIn + session.tokensOut} tokens</strong><p>{session.linkedPr ? 'Linked to a PR' : 'Not linked to a PR'} · {session.sourceEventCount} source events</p><small>{timestamp(session.timestamp)} · prompts and responses not stored</small></div></article>)}</div>}
+        </div>
+        <div className="card admin-evidence-card">
+          <div className="cardhead"><div><span className="page-kicker">Direct PR-link evidence</span><h3>{trace.counts.prLinkEvidence} verified beacons</h3></div><span className="sub">session + repo + PR only</span></div>
+          {trace.prLinkEvidence.length === 0 ? <p className="admin-empty-inline">No provider hook has reported a created pull request yet.</p> : <div className="admin-event-list">{trace.prLinkEvidence.map((evidence) => <article key={evidence.id}><b>{evidence.provider === 'codex' ? 'CX' : 'CC'}</b><div><strong>{evidence.repo} · PR #{evidence.prNumber}</strong><p>{evidence.linkState} · session {evidence.sessionId.slice(0, 12)}</p><small>GitHub verified {timestamp(evidence.verifiedAt)} · received {timestamp(evidence.receivedAt)}{evidence.branch ? ` · ${evidence.branch}` : ''}</small></div></article>)}</div>}
         </div>
         <div className="card admin-evidence-card">
           <div className="cardhead"><div><span className="page-kicker">Linkage</span><h3>{trace.counts.links} AI ↔ PR links</h3></div><span className="sub">correlational, never scored alone</span></div>

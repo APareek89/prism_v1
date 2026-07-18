@@ -1,0 +1,7 @@
+{
+  "name": "prism-pr-link",
+  "version": "0.2.0",
+  "description": "Forwards only session id, repository, and PR number to Prism after Claude Code creates a GitHub pull request.",
+  "author": { "name": "Prism" },
+  "keywords": ["prism", "telemetry", "pr-link", "attribution"]
+}
