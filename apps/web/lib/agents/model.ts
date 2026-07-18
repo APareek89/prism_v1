@@ -51,6 +51,11 @@ async function makeClient(model: string, temperature: number): Promise<ChatAnthr
     model,
     temperature,
     maxRetries: 1,
+    // @langchain/anthropic 0.3.x defaults unknown/new model ids to topP=-1.
+    // Anthropic's current Messages API rejects that sentinel. An explicit
+    // undefined override keeps top_p out of the serialized request while leaving
+    // temperature=0 as Prism's only sampling control.
+    invocationKwargs: { top_p: undefined },
   });
 }
 

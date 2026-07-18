@@ -157,3 +157,12 @@
 **Deepest why type:** `integration`
 **Action taken:** Parse `tool_input.command`, `tool_response`, and `session_id` explicitly, retain the `gh pr create` intent guard, and add opt-in metadata-only skip/status diagnostics without logging the envelope.
 **Preventive action:** Every lifecycle-hook adapter must test its documented input envelope and expose content-free diagnostics for missing intent, response URL, identity, and delivery status.
+
+### 2026-07-18 — New Claude models rejected LangChain's legacy sampling sentinel
+
+**Symptom:** Deterministic scoring and recommendations completed, but real insight and PR-level agents returned Anthropic HTTP 400 because `top_p` was `-1`.
+**Why 1:** `@langchain/anthropic` 0.3.x uses `-1` as its disabled `topP` default for model ids it does not recognize.
+**Why 2:** Claude Sonnet 4.6 is newer than that adapter's special-case model list, while the current Anthropic Messages API rejects negative `top_p`.
+**Deepest why type:** `integration`
+**Action taken:** Override the adapter's invocation kwargs so `top_p` is omitted and Prism keeps temperature zero as its sole sampling control; verify with a focused constructor contract test and a real agent run.
+**Preventive action:** Each configured production model must pass one real structured-output smoke test after either the model id or provider adapter changes; the full-loop operator result must surface agent soft errors.
