@@ -4,6 +4,7 @@ import { isGithubConfigured, listInstallations } from '@/lib/connectors/github/c
 import { getConnectOverview } from '@/lib/connectors/telemetry/store';
 import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
 import { ConnectClient } from '@/components/connect/ConnectClient';
+import { BackLink } from '@/components/ui/BackLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,7 @@ export default async function ConnectPage() {
 
   return (
     <div className="main connect-page">
+      <div className="backbtn"><BackLink href="/configure">Back to Configuration</BackLink></div>
       <PageHeader
         kicker="Live data foundation"
         title="Connect the work, then the AI sessions"

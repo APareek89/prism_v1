@@ -15,12 +15,12 @@ const PROVIDERS: Array<{
   {
     id: 'codex',
     label: 'Codex',
-    description: 'Connect OpenAI Codex CLI telemetry from this computer.',
+    description: 'Connect OpenAI Codex CLI or IDE telemetry from its execution environment.',
   },
   {
     id: 'claude_code',
     label: 'Claude Code',
-    description: 'Connect Anthropic Claude Code telemetry from this computer.',
+    description: 'Connect Claude Code telemetry from its execution environment.',
   },
 ];
 
@@ -54,6 +54,7 @@ export function WorkspaceTelemetryCard({
   const [working, setWorking] = useState(false);
   const [copied, setCopied] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [executionPlace, setExecutionPlace] = useState<'local' | 'remote' | 'managed'>('local');
 
   const state = provider === 'codex' ? overview?.codex : overview?.claudeCode;
   const providerLabel = provider === 'codex' ? 'Codex' : 'Claude Code';
@@ -132,12 +133,29 @@ export function WorkspaceTelemetryCard({
         <div>
           <span className="page-kicker">Personal data connection</span>
           <h2 id="workspace-connect-title">Connect your coding agent</h2>
-          <p>Choose your tool, generate the private command, then paste it into the terminal on the computer where you use that tool.</p>
+          <p>Choose your tool, generate the private command, then run it in the environment where that tool actually executes.</p>
         </div>
         <div className="workspace-identity">
           <span className="avatar">{displayName.slice(0, 2).toUpperCase()}</span>
           <span><strong>{displayName}</strong><small>{email ?? overview?.email ?? 'Signed in'}</small></span>
           <button type="button" className="text-link" onClick={signOut}>Sign out</button>
+        </div>
+      </div>
+
+      <div className="execution-place" aria-labelledby="execution-place-title">
+        <div><span className="page-kicker">Execution environment</span><h3 id="execution-place-title">Where does your coding agent run?</h3></div>
+        <div className="execution-place-options">
+          {([
+            ['local', 'Local computer', 'Run once in your normal terminal.'],
+            ['remote', 'Remote workstation', 'Run inside Cloud Workstations, Codespaces, SSH, or another remote dev shell.'],
+            ['managed', 'Enterprise managed', 'Your platform admin may need to deploy the same settings centrally.'],
+          ] as const).map(([id, label, detail]) => <button type="button" className={executionPlace === id ? 'active' : ''} aria-pressed={executionPlace === id} key={id} onClick={() => setExecutionPlace(id)}><strong>{label}</strong><small>{detail}</small></button>)}
+        </div>
+        <div className="execution-place-guidance">
+          {executionPlace === 'local' ? <p><strong>Local:</strong> the installer writes only to your user-level agent config and creates timestamped backups.</p> : null}
+          {executionPlace === 'remote' ? <p><strong>Remote:</strong> open the remote terminal and run the command there. The environment needs outbound HTTPS access to Prism, and its home/config directory must persist between restarts. OpenAI-hosted Codex cloud tasks are not covered by this client-side command today.</p> : null}
+          {executionPlace === 'managed' ? <p><strong>Enterprise:</strong> managed Codex or Claude settings can override user configuration. Start with one approved user, then have the platform team deploy the collector endpoint and headers through the organization’s managed configuration.</p> : null}
+          {provider === 'claude_code' ? <p><strong>Vertex AI:</strong> it is still a Claude Code connection. Prism adds OTEL settings without changing your Google Cloud project, region, model, gateway, or credentials.</p> : null}
         </div>
       </div>
 
@@ -178,7 +196,7 @@ export function WorkspaceTelemetryCard({
             <i />{state?.status === 'connected' ? `Connected · ${dateLabel(state.lastSeenAt ?? null)}` : state?.status === 'pending' ? 'Setup started · waiting for first signal' : 'Not connected'}
           </span>
           <h3>{command ? `Run this ${providerLabel} command` : `Create your ${providerLabel} command`}</h3>
-          <p>{command ? 'Copy the entire line and run it in Terminal. Prism will back up your existing config and keep prompt/content logging disabled.' : 'Commands expire after 15 minutes and are shown only once because Prism stores only a hash of the invitation.'}</p>
+          <p>{command ? `Copy the entire line and run it in the ${executionPlace === 'local' ? 'local' : executionPlace === 'remote' ? 'remote' : 'approved managed'} terminal where ${providerLabel} executes. Prism will back up your existing config and keep prompt/content logging disabled.` : 'Commands expire after 15 minutes and are shown only once because Prism stores only a hash of the invitation.'}</p>
         </div>
 
         {connectionMethods.includes('terminal') && command ? (

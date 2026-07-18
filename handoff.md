@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 2917023 · branch: `main` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 0c441bb · branch: `codex/product-hardening-qa` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -8,41 +8,33 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 ## Current state
 
-- ✅ Shipped: real-data UI, GitHub App sync, Supabase/Resend login, personal Codex/Claude OTLP installers, Connect flow, temporary Admin calculation lab, private `APareek89/prism_v1`, and Render at `https://prism-v1.onrender.com` (details in git log + `Learning.MD`).
-- ✅ Clean measurement scope: live function/connector plus every persisted GitHub row contain only `APareek89/prism-measurement-lab`; auth identities, roles, index config, and personal telemetry connections were preserved.
-- ✅ PR-link enrichment: PRs #10–#12 added hashed-bearer `/pr-link`, exact connection/session matching, GitHub verification, repo-scope checks, Codex + Claude PostToolUse installers, `gh pr create` intent guard, zero-timestamp repair, and Admin pending/linked evidence. No prompt/code/command/tool payload is persisted.
-- ✅ Real dogfooding: lab PRs #7–#10 added 11 correctly attributed Codex-coauthored commits. The fresh Codex PR #10 run produced 75 OTLP events and an automatic verified beacon; PRs #9/#10 are linked at `pr_link@0.99`.
-- ✅ 2026-07-18 rerun: 10 real merged PRs, 23 commits, 3 Codex sessions, 2 beacons/links, 141 blame lines, 13 KPI rows, and 5 index rows. Function result = `46.1667`, band `L2`, medium confidence; scope remains only the lab repo.
-- ✅ Agent compatibility shipped in PR #13: omitting LangChain 0.3's invalid `top_p=-1` for Claude 4.6 produced 8 real scoped insights and 10 PR-level outputs with zero agent errors; Render health and authenticated Admin QA passed.
-- ✅ Configuration milestone shipped in PR #14 / main `2917023`: migration 0037 adds zero-seed audited configuration/action tables; Admin follows Connection → Data → Index → Organization → Access; approved categories and measurement start gate future pipeline/analytics inputs; all KPI weights/directions/anchors and section-specific before/after evidence are visible; Member/Manager/Management/Admin capabilities drive navigation and guarded routes.
-- ✅ Product flow split cleanly: Overview adds real delivery/token/provider metrics, repo/team/manager operating filters, and deterministic delta decomposition; My View has Connection + Performance only; My Actions owns recommendation acknowledgement and official resources; Org Actions turns real gaps/insights into accountable experiments without causality claims. Repo filters narrow PR/link evidence while tokens remain people-scoped until sessions have a canonical repo join key.
-- ✅ Owner connection policy is confirmed from 2026-07-18 with GitHub live, Codex + Claude Code offered, and both terminal + email methods. Data-processing approval remains intentionally unconfirmed for the owner to review.
-- ✅ Verification: 309 tests, typecheck, production build, migration/live-column checks, all 4 Mermaid diagrams, and authenticated desktop/mobile QA passed. Render deploy `dep-d9dp8s67r5hc73ctbmm0` is live at `https://prism-v1.onrender.com`; production health returned `demoMode:false` / `db:ok`, and authenticated Overview, Configuration, My Actions, Org Actions, and Admin had zero console errors or warnings.
+- ✅ Shipped through Configuration milestone PR #14: real-data UI, GitHub/Supabase/Resend/OTLP/PR-link connections, Admin calculation lab, lab-only dogfooding, deterministic scoring, role-aware configuration/actions, and Render `https://prism-v1.onrender.com` (see git log + `Learning.MD`).
+- ✅ Live scope remains `APareek89/prism-measurement-lab`; the 2026-07-18 run produced 10 PRs, 23 commits, 13 KPI rows, 5 index rows, function index `46.1667`/L2/medium, and 8 real employee insights. No synthetic `public.*` rows.
+- 🟡 Product-hardening branch complete: Configure input focus survives typing; Connect has a back path; Index opens Admin details in a new tab; L2 definitions and honest prior-period states appear on Overview/My View; Overview includes grounded wins/gaps; My View fetches only the active tab; all primary routes fit 390px.
+- 🟡 Telemetry audit: historical GPT-5.6 sessions are real but persisted with zero counters because the OTLP normalizer missed Codex `*_token_count`/`slug` attributes. New events capture them without double-counting cached input; historical discarded attributes cannot be reconstructed, so UI says “Counters not captured.” Real Claude history also exists for the owner.
+- 🟡 Analytics comparisons use selected calendar windows, preserve prior-only providers, associate verified links with the PR merge window, and remain unavailable until a complete real baseline exists. Daily becomes comparable on the next measured day; weekly/monthly need 7/30-day prior coverage.
+- 🟡 Enterprise connection guidance covers local, remote/cloud workstation, centrally managed rollout, and Claude Code on Vertex AI. The installer must run where the coding agent executes; it does not collect OpenAI-hosted Codex cloud activity.
+- ✅ Verification on this branch: 310 tests, workspace typecheck/lint/build, diff check, authenticated browser flows with zero console errors, and 390px overflow checks for Overview, Configure, My View Connection, and My View Performance.
 
 ## Product/architecture decisions
 
-- 2026-07-17 — GitHub connection is organization/function level; Codex/Claude consent and identity are per person.
-- 2026-07-17 — Missing evidence is honest insufficient/empty state; no placeholder/demo rows in `public.*`.
-- 2026-07-17 — Supabase owns login identity/session; Resend is mail transport; employee claiming uses exact normalized email only.
-- 2026-07-18 — Admin is read-only presentation over the production assembler + engine; it may expand returned values into literal equations but never copy/recompute formulas.
-- 2026-07-18 — OTLP stays the activity/token feed; PostToolUse adds only `{sessionId, repo, prNumber}` exact-link evidence.
-- 2026-07-18 — A beacon links only after bearer identity, dual repo scope, GitHub PR verification, and exact `(connection_id, source_session_id)` match.
-- 2026-07-18 — Non-positive provider time means absent; use observed time or immutable collector receipt time, never 1970.
-- 2026-07-18 — Database roles retain their stable enum values but present as Member (`developer`), Manager, Management (`function_lead`), and Admin; capabilities are enforced server-side and mirrored in navigation.
-- 2026-07-18 — Configuration is sequential and audited. A weight change appends a frozen `index_config` version; it never rewrites an old `index_daily` row or recomputes in the browser.
-- 2026-07-18 — Management filters narrow operating evidence only. They never recompute a published index in the UI, and a repository filter cannot narrow tokens until session metadata carries a canonical repo join key.
-- 2026-07-18 — “Actioned” records human intent only. Adoption and impact require later evidence; USD remains unavailable unless a provider-reported `cost_usd` exists.
+- 2026-07-17 — GitHub connection is organization/function level; Codex/Claude consent and identity are per person; Supabase claiming uses one exact normalized email.
+- 2026-07-18 — Admin is read-only presentation over production assembler/engine; OTLP is the activity feed; PostToolUse adds only exact `{sessionId, repo, prNumber}` evidence.
+- 2026-07-18 — Missing evidence is insufficient/unavailable, never zero or synthetic; non-positive provider timestamps fall back to observed/receipt time.
+- 2026-07-18 — Configuration is sequential/audited; index versions are append-only; roles are server-enforced; operating filters never recompute the published index.
+- 2026-07-18 — Codex cached tokens are a subset of input: persist non-cached input plus cache-read separately so totals count each token once.
+- 2026-07-18 — Management insights may roll up latest real employee narratives when no function KPI narrative exists; the rollup identifies the person and never computes a score.
 
 ## Hard boundaries
 
-- `services/engine`/`lib/scoring` own all scores; agents narrate only. MAIN/HARNESS remain separate.
-- No synthetic product rows, hours-saved claims, or unverified dollars/ROI claims.
+- `services/engine`/`lib/scoring` own every score; agents narrate only. No synthetic product rows, hours-saved claims, or unverified cost/ROI.
 - Stored telemetry excludes prompts, responses, source code, commands, tool inputs/outputs, and unknown OTLP attributes.
 
 ## Next
 
-- Owner reviews and confirms Data processing in Configuration. Then confirm unchanged Index v1, repository/people structure, and access roles; no consent step is auto-approved.
-- GitHub-side safeguard: at `https://github.com/settings/installations/143692925`, remove `APareek89/prism`, leave only `APareek89/prism-measurement-lab`, and save; internal DB scope is pinned but setup callbacks treat GitHub's selected repos as authoritative.
-- `DIGEST_FROM_EMAIL` remains blank; verify a Resend domain and set sender variables before broad team invitations. Full FMEA/paid evals still require owner approval.
+- Commit, push, open/merge the product-hardening PR, then verify Render health and authenticated production surfaces; do not include unrelated untracked `integration-map.md` or `prd-visual.html`.
+- Owner confirms Data processing and unchanged Index v1, then repository/people/access configuration; no consent step is auto-approved.
+- GitHub safeguard: at `https://github.com/settings/installations/143692925`, leave only `APareek89/prism-measurement-lab`; GitHub-selected repos remain authoritative on setup callbacks.
+- Verify a Resend domain before team rollout; `DIGEST_FROM_EMAIL` remains blank. Full FMEA/paid evals require explicit owner approval.
 
-**Session efficiency:** 🎯 ~65% configuration + role-aware product flow · 🔧 ~25% real analytics/actions + live schema · 🔁 ~10% browser/build verification
+**Session efficiency:** 🎯 55% product/data fixes · 🔧 30% wiring + browser/build QA · 🔁 15% environment/rework

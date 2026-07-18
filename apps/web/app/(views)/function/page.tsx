@@ -6,6 +6,7 @@ import {
   getTrend,
   getTokenStats,
   getImprovements,
+  getStrengths,
   getDrivers,
 } from '@/lib/db/index-read';
 import { getRoster } from '@/lib/db/roster';
@@ -13,7 +14,6 @@ import { getConnectOverview } from '@/lib/connectors/telemetry/store';
 import { IndexHero } from '@/components/panels/IndexHero';
 import { SpectrumPanel } from '@/components/panels/SpectrumPanel';
 import { TokenLens } from '@/components/panels/TokenLens';
-import { InsightList } from '@/components/panels/InsightList';
 import { ChangeList } from '@/components/panels/ChangeList';
 import { AnalyticsGrid, MovementExplainer } from '@/components/panels/AnalyticsGrid';
 import { OverviewFilters } from '@/components/panels/OverviewFilters';
@@ -24,6 +24,7 @@ import { PeriodToggle } from '@/components/layout/PeriodToggle';
 import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
 import { INK } from '@/app/tokens';
 import { parsePeriod } from '@/lib/config/constants';
+import { PerformanceInsights } from '@/components/panels/PerformanceInsights';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,18 +60,21 @@ export default async function FunctionView({
     team: typeof sp.team === 'string' ? sp.team : '',
     manager: typeof sp.manager === 'string' ? sp.manager : '',
   };
-  const [meta, index, trend, tokenStats, improvements, drivers, roster, live, filterContext] = await Promise.all([
+  const filteringRequested = Boolean(requested.repo || requested.team || requested.manager);
+  const [meta, index, trend, tokenStats, improvements, strengths, drivers, roster, live, filterContext, unfilteredAnalytics] = await Promise.all([
     getMeta('function', functionId, period),
     getIndex('function', functionId, period),
     getTrend('function', functionId, period),
     getTokenStats(period),
     getImprovements('function', functionId),
+    getStrengths('function', functionId),
     getDrivers('function', functionId, period),
     getRoster(functionId),
     getConnectOverview(functionId),
     getOverviewFilterContext(functionId, requested),
+    filteringRequested ? Promise.resolve(null) : getAnalytics({ kind: 'function', id: functionId }, {}, period),
   ]);
-  const analytics = await getAnalytics({ kind: 'function', id: functionId }, filterContext.filter);
+  const analytics = unfilteredAnalytics ?? await getAnalytics({ kind: 'function', id: functionId }, filterContext.filter, period);
 
   return (
     <div className="page">
@@ -101,6 +105,8 @@ export default async function FunctionView({
         scopeCaveat={filterContext.selected.repo ? 'PR and verified-link metrics use the repository filter. Token metrics remain people-scoped because current session metadata has no repository value.' : undefined}
       />
 
+      <PerformanceInsights strengths={strengths} improvements={improvements} organization />
+
       <div className="row r2">
         <div className="card">
           <div className="cardhead"><h3>AI-Native Index trend</h3><span className="sub">{trend.granularityLabel}</span></div>
@@ -109,13 +115,7 @@ export default async function FunctionView({
         <TokenLens stats={tokenStats} />
       </div>
 
-      <div className="row r2">
-        <div className="card">
-          <div className="cardhead"><h3>Highest-leverage improvements</h3><span className="sub">ranked by deterministic index impact</span></div>
-          <InsightList items={improvements} limit={5} emptyHint="improvements appear after the first real scored window" />
-        </div>
-        <MovementExplainer movement={analytics.movement} filtered={filterContext.active} />
-      </div>
+      <MovementExplainer movement={analytics.movement} filtered={filterContext.active} />
 
       {drivers.length ? <div className="card"><div className="cardhead"><h3>Narrative context</h3><span className="sub">agent explanation · never score computation</span></div><ChangeList drivers={drivers} /></div> : null}
 

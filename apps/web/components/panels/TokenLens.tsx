@@ -32,7 +32,7 @@ export function TokenLens({ stats }: TokenLensProps) {
               {stats.tokensPerPrLabel}
             </div>
             <div style={{ paddingBottom: 10 }}>
-              {stats.deltaLabel ? <div className="delta up">{stats.deltaLabel}</div> : null}
+              {stats.deltaLabel ? <div className={`delta ${stats.deltaLabel.startsWith('▼') ? 'up' : 'dn'}`}>{stats.deltaLabel}</div> : <div className="comparison-pending">No comparable prior period</div>}
               <div className="unit">
                 {stats.costPerPrLabel}
                 {stats.costPerPrLabel && stats.targetLabel ? ' · ' : ''}
@@ -48,7 +48,7 @@ export function TokenLens({ stats }: TokenLensProps) {
         <EmptyState
           compact
           title="Awaiting signal"
-          hint="tokens / PR appears once Claude Code sessions sync to merged PRs"
+          hint="tokens / PR appears once opted-in Codex or Claude Code counters sync to merged PRs"
         />
       )}
     </div>
