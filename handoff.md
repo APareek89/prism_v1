@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: ec7e897 · branch: `codex/configuration-workflow` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 2917023 · branch: `main` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -14,10 +14,10 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 - ✅ Real dogfooding: lab PRs #7–#10 added 11 correctly attributed Codex-coauthored commits. The fresh Codex PR #10 run produced 75 OTLP events and an automatic verified beacon; PRs #9/#10 are linked at `pr_link@0.99`.
 - ✅ 2026-07-18 rerun: 10 real merged PRs, 23 commits, 3 Codex sessions, 2 beacons/links, 141 blame lines, 13 KPI rows, and 5 index rows. Function result = `46.1667`, band `L2`, medium confidence; scope remains only the lab repo.
 - ✅ Agent compatibility shipped in PR #13: omitting LangChain 0.3's invalid `top_p=-1` for Claude 4.6 produced 8 real scoped insights and 10 PR-level outputs with zero agent errors; Render health and authenticated Admin QA passed.
-- ✅ Configuration milestone implemented on `codex/configuration-workflow`: migration 0037 adds zero-seed audited configuration/action tables; Admin follows Connection → Data → Index → Organization → Access; approved categories and measurement start gate future pipeline/analytics inputs; all KPI weights/directions/anchors and section-specific before/after evidence are visible; Member/Manager/Management/Admin capabilities drive navigation and guarded routes.
+- ✅ Configuration milestone shipped in PR #14 / main `2917023`: migration 0037 adds zero-seed audited configuration/action tables; Admin follows Connection → Data → Index → Organization → Access; approved categories and measurement start gate future pipeline/analytics inputs; all KPI weights/directions/anchors and section-specific before/after evidence are visible; Member/Manager/Management/Admin capabilities drive navigation and guarded routes.
 - ✅ Product flow split cleanly: Overview adds real delivery/token/provider metrics, repo/team/manager operating filters, and deterministic delta decomposition; My View has Connection + Performance only; My Actions owns recommendation acknowledgement and official resources; Org Actions turns real gaps/insights into accountable experiments without causality claims. Repo filters narrow PR/link evidence while tokens remain people-scoped until sessions have a canonical repo join key.
 - ✅ Owner connection policy is confirmed from 2026-07-18 with GitHub live, Codex + Claude Code offered, and both terminal + email methods. Data-processing approval remains intentionally unconfirmed for the owner to review.
-- ✅ Verification: 309 tests, typecheck, production build, migration/live-column checks, all 4 Mermaid diagrams, and authenticated desktop/mobile QA passed. Overview filters, Configuration, My Actions, Org Actions, and Admin were exercised; mobile score precision is 46.2 and the final browser console had zero errors.
+- ✅ Verification: 309 tests, typecheck, production build, migration/live-column checks, all 4 Mermaid diagrams, and authenticated desktop/mobile QA passed. Render deploy `dep-d9dp8s67r5hc73ctbmm0` is live at `https://prism-v1.onrender.com`; production health returned `demoMode:false` / `db:ok`, and authenticated Overview, Configuration, My Actions, Org Actions, and Admin had zero console errors or warnings.
 
 ## Product/architecture decisions
 
@@ -41,7 +41,6 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 ## Next
 
-- Push `codex/configuration-workflow`, open/merge the PR, deploy Render, and repeat production health plus authenticated smoke checks.
 - Owner reviews and confirms Data processing in Configuration. Then confirm unchanged Index v1, repository/people structure, and access roles; no consent step is auto-approved.
 - GitHub-side safeguard: at `https://github.com/settings/installations/143692925`, remove `APareek89/prism`, leave only `APareek89/prism-measurement-lab`, and save; internal DB scope is pinned but setup callbacks treat GitHub's selected repos as authoritative.
 - `DIGEST_FROM_EMAIL` remains blank; verify a Resend domain and set sender variables before broad team invitations. Full FMEA/paid evals still require owner approval.
