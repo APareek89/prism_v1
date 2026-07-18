@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: f0309f9 · branch: `codex/public-telemetry-endpoints` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 6013ad3 · branch: `codex/admin-measurement-lab` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -9,7 +9,8 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 ## Current state
 
 - ✅ Shipped: decision-first real-data UI, GitHub team/evidence sync, exact-email Supabase/Resend login, per-user Codex/Claude metadata-only OTEL, deterministic scoring boundary, no demo rows, private GitHub repo, and Render deployment (see git log and `Learning.MD`).
-- 🔄 Fix ready for deployment: installer and OTLP collector routes accept their own invite/bearer credentials without a browser session; management routes remain Supabase-protected. Local unauthenticated checks return plain-text 410 / JSON 401 rather than HTML redirects; 249 web tests, typecheck, build, and diagrams pass.
+- ✅ Shipped: installer and OTLP collector routes accept their own invite/bearer credentials without a browser session; management routes remain Supabase-protected. PR #6 is merged and the hosted invalid-invite path returns plain-text 410 rather than HTML.
+- 🔄 In progress: temporary admin-only calculation lab replays the existing assembler + deterministic engine for a selected person/date, expands every KPI/dimension contribution, and joins it to real commits, PRs, sessions, links, insights, and recommendations. Local desktop/mobile checks pass; clean-slate reset and real dogfooding repo are next.
 
 ## Product/architecture decisions
 
@@ -22,6 +23,8 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 - 2026-07-17 — Supabase Auth owns login identity and one-time tokens. `DIGEST_FROM_EMAIL` remains only the visible sender for optional Resend digest mail.
 - 2026-07-17 — Hosted auth separates authority from transport: Supabase owns identity/tokens/sessions; Resend delivers the login link using `AUTH_FROM_EMAIL`.
 - 2026-07-17 — Machine-to-machine telemetry endpoints are public only at middleware level and authenticate with one-time invite or bearer tokens; management endpoints still require Supabase sessions.
+- 2026-07-18 — The Admin lab is a read-only presenter over `assembleMembers` + `computeDaily`; it may expose engine outputs and evidence provenance but must never copy or alter score formulas. Agent narration remains separate.
+- 2026-07-18 — The clean-slate reset preserves authentication, employee identities/roles, GitHub connector installation, telemetry connections/tokens, and `index_config`; it removes historical evidence, computed rows, invites, communications, and narratives before syncing only the real dogfooding repository.
 
 ## Hard boundaries
 
@@ -32,6 +35,7 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 ## Gotchas / next
 
 - Test user action: request the APareek89 work-email login at the Render URL, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
+- Before the clean-slate reset, create a private GitHub dogfooding repository with real same-day commits/PRs and restrict the active GitHub connector to it. Never seed `public.*` or backdate evidence.
 - `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block hosted auth mail, which uses `AUTH_FROM_EMAIL` or Resend's owner-only default sender. Verify a Resend domain and set both sender variables before inviting the broader team; digest delivery stays off until its sender is configured.
 - Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
 - Add the hosted `/auth/callback` to Supabase Auth redirect URLs as defense-in-depth/fallback, and add the hosted `/api/connectors/github/install` URL to the GitHub App setup/callback configuration.

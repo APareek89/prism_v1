@@ -98,3 +98,13 @@
 **Deepest why type:** `process`
 **Action taken:** Publicly route only the installer and OTLP paths at middleware level, retain their invite/bearer authentication, keep management paths private, and add path-level regression tests.
 **Preventive action:** Every machine-to-machine endpoint must be tested without browser cookies and assert status plus content type before its response is piped to a shell or SDK.
+
+### 2026-07-18 — A top-line score was not enough to course-correct the model
+
+**Symptom:** The owner could see Prism's index and recommendations but could not trace a new commit through its real evidence, KPI normalization, effective weighting, confidence, and publication gates.
+**Why 1:** Product views were deliberately decision-first and hid most model internals.
+**Why 2:** Existing evidence pages showed outcomes but did not replay the exact production input assembly and scoring output for one person/date.
+**Why 3:** Deterministic calculations and agent narratives had no shared audit surface that kept their different responsibilities explicit.
+**Deepest why type:** `design`
+**Action taken:** Add an admin-only, read-only calculation lab that calls the existing assembler and scoring engine, expands their returned values into an evidence-to-contribution trace, and displays persisted narratives separately.
+**Preventive action:** Any future score or gate must expose its source evidence, configured and effective weights, confidence effect, and deterministic-versus-narrative ownership in the Admin trace before release.
