@@ -22,6 +22,7 @@ import type {
 import { DIMENSION_TAG } from '@/lib/ui/view-models';
 import { NO_SIGNAL, fmtTokens } from '@/lib/format';
 import { getIndex, getMeta } from './index-read';
+import type { Period } from '@/lib/config/constants';
 import {
   db,
   selectRows,
@@ -192,10 +193,11 @@ export async function getMemberComms(memberId: string): Promise<CommsEntryDTO[]>
 
 export async function getMyView(
   employeeId: string,
+  period: Period = 'weekly',
 ): Promise<{ index: IndexDTO; meta: MetaDTO }> {
   const [index, meta] = await Promise.all([
-    getIndex('employee', employeeId, 'weekly'),
-    getMeta('employee', employeeId, 'weekly', 'My view'),
+    getIndex('employee', employeeId, period),
+    getMeta('employee', employeeId, period, 'My view'),
   ]);
   return { index, meta };
 }

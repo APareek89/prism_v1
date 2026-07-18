@@ -155,33 +155,48 @@ export function normalizeOtelLogs(payload: unknown): NormalizedTelemetryEvent[] 
           'input.length',
         ]);
 
+        const cacheRead = firstNumber(attrs, [
+          'cached_token_count',
+          'cached_input_tokens',
+          'cache_read_tokens',
+          'cache_read_input_tokens',
+          'gen_ai.usage.cache_read_tokens',
+        ]);
+        const reportedInput = firstNumber(attrs, [
+          'input_token_count',
+          'input_tokens',
+          'input.token_count',
+          'gen_ai.usage.input_tokens',
+          'gen_ai.usage.prompt_tokens',
+        ]);
+        // Codex reports cached_token_count as a subset of input_token_count on
+        // response.completed. Store the non-cached remainder in tokens_in so the
+        // existing `tokens_in + cache_read + tokens_out` contract counts each token
+        // once. Claude reports cache counters separately, so its input stays intact.
+        const tokensIn = eventName.startsWith('codex.')
+          ? Math.max(0, reportedInput - cacheRead)
+          : reportedInput;
+
         events.push({
           sourceSessionId: sourceSessionId?.slice(0, 300) ?? null,
           eventName,
           eventTime: timestamp(record),
           model: firstString(attrs, [
             'model',
+            'slug',
             'model_name',
             'gen_ai.request.model',
             'gen_ai.response.model',
           ])?.slice(0, 200) ?? null,
-          tokensIn: firstNumber(attrs, [
-            'input_tokens',
-            'input.token_count',
-            'gen_ai.usage.input_tokens',
-            'gen_ai.usage.prompt_tokens',
-          ]),
+          tokensIn,
           tokensOut: firstNumber(attrs, [
+            'output_token_count',
             'output_tokens',
             'output.token_count',
             'gen_ai.usage.output_tokens',
             'gen_ai.usage.completion_tokens',
           ]),
-          cacheRead: firstNumber(attrs, [
-            'cache_read_tokens',
-            'cache_read_input_tokens',
-            'gen_ai.usage.cache_read_tokens',
-          ]),
+          cacheRead,
           cacheCreation: firstNumber(attrs, [
             'cache_creation_tokens',
             'cache_creation_input_tokens',

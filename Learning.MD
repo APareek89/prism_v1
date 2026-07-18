@@ -192,3 +192,56 @@
 **Deepest why type:** `integration`
 **Action taken:** Repository filters now scope PR and verified-link metrics only. Token metrics remain people-scoped and the UI states the attribution limitation explicitly; missing persisted PR buckets are also counted as unclassified rather than displayed as three misleading zeros.
 **Preventive action:** Cross-source filters must prove a normalized join key before narrowing a metric. If the key is absent, retain the valid broader scope and show the limitation instead of converting unknown attribution into zero activity.
+
+### 2026-07-18 — Nested step components discarded form focus on every keystroke
+
+**Symptom:** Typing one character into role, title, or team inputs immediately removed focus.
+**Why 1:** Step render functions were declared inside the parent and mounted through JSX, creating a new React component type on every parent state update.
+**Why 2:** React correctly remounted that subtree, replacing the active input node.
+**Deepest why type:** `code`
+**Action taken:** Invoke the stable step render functions directly and remove the redundant full-page reload after `router.refresh()`.
+**Preventive action:** Stateful inline render helpers must not be used as JSX component types; browser regression checks must type multiple characters and assert the same input remains active.
+
+### 2026-07-18 — Real Codex sessions looked like zero token usage
+
+**Symptom:** GPT-5.6 showed real sessions but zero tokens even though Codex was the active tool.
+**Why 1:** The privacy allowlist recognized generic/Claude token keys but not Codex's `input_token_count`, `output_token_count`, `cached_token_count`, and `slug` attributes.
+**Why 2:** Unknown attributes are deliberately discarded at ingestion, so historical counters cannot be recovered from persisted sanitized events.
+**Deepest why type:** `integration`
+**Action taken:** Normalize the Codex contract, subtract cached input before persisting the non-cached input bucket, and distinguish “Counters not captured” from a true measured zero.
+**Preventive action:** Every supported provider/model needs a documented payload fixture that asserts model, input, output, cache, total, and privacy-discard behavior.
+
+### 2026-07-18 — Function insights were empty despite completed employee narration
+
+**Symptom:** Overview had shallow/empty improvement text while My View had real stored insights.
+**Why 1:** The deterministic engine aggregates employee scores into the function index without fabricating function KPI rows.
+**Why 2:** The narration graph therefore had employee inputs but no function-level input, while Overview queried only function insights.
+**Deepest why type:** `architecture`
+**Action taken:** Roll up only the latest real employee attribution/improvement narratives for management, identify their subject, and keep scoring untouched.
+**Preventive action:** Aggregated views must define whether each narrative is computed at that scope or transparently rolled up from lower-scope evidence.
+
+### 2026-07-18 — Period comparisons could misclassify links and delay a daily baseline
+
+**Symptom:** New metrics had no consistent prior-period explanation, and a verified link could fall into a different window than the PR it evidenced.
+**Why 1:** Analytics used rolling wall-clock boundaries and split links by beacon receipt time.
+**Why 2:** Delivery belongs to the PR merge window, and the product's daily score is calendar-based.
+**Deepest why type:** `logic`
+**Action taken:** Use calendar-aligned 1/7/30-day windows, intersect verified associations with PRs in each merge window, preserve prior-only providers, and publish “No prior measured period” until complete coverage exists.
+**Preventive action:** Period tests must cover first-day measurement, the next daily batch, prior-only providers, long-running PRs, missing counters, and exact-link timing.
+
+### 2026-07-18 — Hidden-tab work and unstable rendering made navigation feel slow
+
+**Symptom:** Moving between tabs felt sluggish and some reloads could hydrate differently.
+**Why 1:** My View fetched connection policy, telemetry, performance, PR insights, and analytics regardless of the active tab.
+**Why 2:** Default Overview analytics waited for unrelated reads, and locale-dependent server timestamps could disagree with the browser.
+**Deepest why type:** `performance`
+**Action taken:** Fetch only active-tab data, parallelize independent reads, add route loading feedback, and render deterministic UTC timestamps.
+**Preventive action:** Every tab must declare its data dependencies; server-rendered dates must be locale-stable; route transitions need loading and browser-console checks.
+
+### 2026-07-18 — One-column CSS still overflowed because charts kept their min-content width
+
+**Symptom:** Overview remained 580px wide inside a 390px viewport after switching the grid to one column.
+**Why 1:** CSS Grid's default `min-width:auto` allowed the SVG chart's intrinsic width to expand the track.
+**Deepest why type:** `css`
+**Action taken:** Use `minmax(0,1fr)`, set grid children/chart wrappers to `min-width:0`, and constrain SVGs to their container.
+**Preventive action:** Responsive QA must measure document width on real chart data, not infer success from media-query column count.

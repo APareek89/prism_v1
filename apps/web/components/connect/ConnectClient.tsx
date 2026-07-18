@@ -278,7 +278,7 @@ export function ConnectClient({
             <button className="setup-close" aria-label="Close setup" onClick={() => setSetup(null)}>×</button>
             <span className="page-kicker">Personal one-time setup</span>
             <h2 id="setup-title">Connect {setup.employeeName} to {providerLabel[setup.provider]}</h2>
-            <p>Run this once on the same computer where {providerLabel[setup.provider]} runs. It backs up the existing config, keeps prompt logging off, and sends a test signal.</p>
+            <p>Run this once in the same local or remote environment where {providerLabel[setup.provider]} executes. It backs up the existing user config, keeps prompt logging off, and sends a test signal. Managed enterprise settings may require an administrator rollout.</p>
             <pre><code>{setup.command}</code></pre>
             <div className="setup-actions">
               <button className="button primary" onClick={copyCommand}>{copied ? 'Copied' : 'Copy command'}</button>

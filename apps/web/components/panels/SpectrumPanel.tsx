@@ -11,6 +11,13 @@ import { DIMENSION_HUES } from '@/app/tokens';
 import { fmtScore } from '@/lib/format';
 import type { L2DTO } from '@/lib/ui/view-models';
 
+const DIMENSION_DEFINITION: Record<L2DTO['dimension'], string> = {
+  usage: 'How consistently AI is used in shipped work: AI-linked PR share, session cadence, and depth of agentic workflows.',
+  efficiency: 'How economically AI-assisted work reaches merge: iteration count, accepted suggestions, and tokens used per shipped change.',
+  effectiveness: 'Whether AI-assisted changes remain durable after merge: reverts, defect rework, retention, and change failures.',
+  proficiency: 'Whether reusable AI practices compound over time: authored skills, effective skill reuse, and multiplier signals.',
+};
+
 export interface SpectrumPanelProps {
   spectrum: L2DTO[];
   /** When true the small line reads "vs squad NN" instead of the weight. */
@@ -43,7 +50,13 @@ export function SpectrumPanel({ spectrum, showVsSquad = false }: SpectrumPanelPr
             <div className="lab">
               <i style={{ background: hue }} />
               <div>
-                {l2.label}
+                <span className="sub-index-label">
+                  {l2.label}
+                  <details className="sub-index-info">
+                    <summary aria-label={`What ${l2.label} means`}>i</summary>
+                    <span>{DIMENSION_DEFINITION[l2.dimension]}</span>
+                  </details>
+                </span>
                 <small>{small}</small>
               </div>
             </div>
@@ -54,7 +67,7 @@ export function SpectrumPanel({ spectrum, showVsSquad = false }: SpectrumPanelPr
               <b>{fmtScore(l2.score)}</b>
               {hasSignal && l2.delta ? (
                 <span className={`d delta ${deltaClass(l2.delta.dir)}`}>{l2.delta.label}</span>
-              ) : null}
+              ) : hasSignal ? <span className="comparison-pending">No prior</span> : null}
             </div>
           </div>
         );

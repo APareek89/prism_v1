@@ -27,6 +27,7 @@ export {
   getTrend,
   getTokenStats,
   getImprovements,
+  getStrengths,
   getDrivers,
   emptyIndex,
   emptyTokenStats,

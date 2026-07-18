@@ -48,7 +48,7 @@ export function IndexHero({ index, vsSquad = false }: IndexHeroProps) {
         </div>
         {delta ? (
           <div className={`delta ${deltaClass(delta.dir)}`}>{delta.label}</div>
-        ) : null}
+        ) : <div className="comparison-pending inverse">No comparable prior score</div>}
       </div>
       {index.band ? (
         <div className="lvl">

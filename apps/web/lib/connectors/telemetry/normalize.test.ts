@@ -57,6 +57,36 @@ describe('normalizeOtelLogs', () => {
     expect(JSON.stringify(event)).not.toContain('private response text');
   });
 
+  it('captures Codex response.completed counters without double-counting cached input', () => {
+    const [event] = normalizeOtelLogs({
+      resourceLogs: [{
+        scopeLogs: [{
+          logRecords: [{
+            body: { stringValue: 'codex.sse_event' },
+            attributes: [
+              attr('conversation.id', 'conversation-2'),
+              attr('event.kind', 'response.completed'),
+              attr('slug', 'gpt-5.6-sol'),
+              attr('input_token_count', 10_701),
+              attr('output_token_count', 122),
+              attr('cached_token_count', 8_192),
+            ],
+          }],
+        }],
+      }],
+    });
+
+    expect(event).toMatchObject({
+      sourceSessionId: 'conversation-2',
+      eventName: 'codex.sse_event',
+      model: 'gpt-5.6-sol',
+      tokensIn: 2_509,
+      tokensOut: 122,
+      cacheRead: 8_192,
+    });
+    expect((event?.tokensIn ?? 0) + (event?.tokensOut ?? 0) + (event?.cacheRead ?? 0)).toBe(10_823);
+  });
+
   it('treats a zero provider timestamp as absent and uses the observed timestamp', () => {
     const [event] = normalizeOtelLogs({
       resourceLogs: [{

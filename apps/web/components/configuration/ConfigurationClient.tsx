@@ -16,7 +16,10 @@ const STEPS: Array<{ id: Step; label: string; hint: string }> = [
 ];
 
 function dateTime(value: string | null): string {
-  return value ? new Date(value).toLocaleString() : 'Not confirmed';
+  if (!value) return 'Not confirmed';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Not confirmed';
+  return `${date.toISOString().slice(0, 16).replace('T', ' ')} UTC`;
 }
 
 export function ConfigurationClient({ initial, currentEmployeeId }: { initial: ConfigurationSnapshot; currentEmployeeId: string }) {
@@ -52,7 +55,6 @@ export function ConfigurationClient({ initial, currentEmployeeId }: { initial: C
       if (!response.ok || !body.ok) throw new Error(body.error ?? 'Could not save configuration');
       setNotice({ tone: 'good', text: `${String(payload.section)} configuration confirmed. The audit history has been updated.` });
       router.refresh();
-      window.setTimeout(() => window.location.reload(), 650);
     } catch (error) {
       setNotice({ tone: 'bad', text: error instanceof Error ? error.message : 'Could not save configuration' });
     } finally { setWorking(false); }
@@ -85,11 +87,11 @@ export function ConfigurationClient({ initial, currentEmployeeId }: { initial: C
 
       <section className="configuration-stage">
         {notice ? <div className={`config-notice ${notice.tone}`} role="status">{notice.text}</div> : null}
-        {step === 'connection' ? <ConnectionStep /> : null}
-        {step === 'data' ? <DataStep /> : null}
-        {step === 'index' ? <IndexStep /> : null}
-        {step === 'organization' ? <OrganizationStep /> : null}
-        {step === 'access' ? <AccessStep /> : null}
+        {step === 'connection' ? ConnectionStep() : null}
+        {step === 'data' ? DataStep() : null}
+        {step === 'index' ? IndexStep() : null}
+        {step === 'organization' ? OrganizationStep() : null}
+        {step === 'access' ? AccessStep() : null}
       </section>
     </div>
   );
@@ -125,7 +127,7 @@ export function ConfigurationClient({ initial, currentEmployeeId }: { initial: C
       <div className="index-config-list">{dimensions.map((dimension) => { const reason = initial.index.disabledReasons[dimension]; return <article key={dimension} className={reason ? 'disabled' : ''}><div><span className="dimension-name">{dimension}</span><strong>{reason ? 'Unavailable with selected data' : 'Available'}</strong><p>{reason ?? 'Uses only approved evidence and the existing normalization anchors.'}</p></div><label>Weight<input type="number" min="0" max="100" step="1" value={weights[dimension]} onChange={(event) => setWeights((current) => ({ ...current, [dimension]: Number(event.target.value) }))} />%</label></article>; })}</div>
       <section className="kpi-contract"><div className="data-source-title"><strong>Complete KPI contract</strong><span>{initial.index.availableKpis.length}/{initial.index.kpis.length} have real signal · normalization is capped 0–100</span></div>{dimensions.map((dimension) => <details key={dimension} open={dimension === 'usage'}><summary><span>{dimension}</span><small>minimum {initial.index.minimumSignals[dimension]} signals · {weights[dimension]}% of L1</small></summary><div className="kpi-contract-rows">{initial.index.kpis.filter((kpi) => kpi.dimension === dimension).map((kpi) => <article key={kpi.id}><div><strong>{kpi.label}</strong><code>{kpi.id}</code></div><span>{kpi.intraWeight}% of {dimension}</span><span>{kpi.direction === 'lower' ? '↓ lower is better' : '↑ higher is better'}</span><span>{kpi.anchorLabel}</span><em className={kpi.hasSignal ? 'live' : ''}>{kpi.hasSignal ? 'real signal' : 'awaiting evidence'}</em></article>)}</div></details>)}</section>
       <details className="config-details"><summary>Calculation and publication contract</summary><div><p>L1 = the weighted sum of qualifying L2 dimensions divided by the enabled weight total. Each L2 is a weighted combination of normalized KPI scores from 0–100.</p><p>Confidence is derived from qualifying evidence weight. L0/L5 gates, minimum signal, frozen sizing, and all KPI anchors remain unchanged.</p><p>Historical `index_daily` rows retain their original `config_version`; no backfill is performed by confirmation.</p></div></details>
-      <div className="config-footer"><p>{weightTotal === 100 ? 'This confirmation applies to future pipeline runs. No score is recomputed in the browser.' : `Adjust weights by ${100 - weightTotal} percentage points.`}</p><button className="button primary" disabled={working || weightTotal !== 100} onClick={() => save({ section: 'index', weights })}>{working ? 'Saving…' : `Confirm as ${JSON.stringify(weights) === JSON.stringify(initial.index.weights) ? `version ${initial.index.version}` : `new version ${initial.index.version + 1}`}`}</button></div>
+      <div className="config-footer"><p>{weightTotal === 100 ? 'This confirmation applies to future pipeline runs. Open Details for the live calculation trace, evidence rows, gates, and exact arithmetic.' : `Adjust weights by ${100 - weightTotal} percentage points.`}</p><div className="config-footer-actions"><Link className="button" href="/admin" target="_blank" rel="noreferrer">Details ↗</Link><button className="button primary" disabled={working || weightTotal !== 100} onClick={() => save({ section: 'index', weights })}>{working ? 'Saving…' : `Confirm as ${JSON.stringify(weights) === JSON.stringify(initial.index.weights) ? `version ${initial.index.version}` : `new version ${initial.index.version + 1}`}`}</button></div></div>
     </>;
   }
 

@@ -331,7 +331,11 @@ interface InsightRowLite {
   dimension: string | null;
   est_impact: number | null;
   kind: string;
+  rank: number;
+  date: string;
+  scope_id: string;
   created_at: string;
+  subjectName?: string;
 }
 
 export async function getImprovements(
@@ -343,11 +347,30 @@ export async function getImprovements(
     const dim = normalizeDimension(row.dimension);
     return {
       rank: i + 1,
-      title: row.title,
+      title: row.subjectName ? `${row.subjectName}: ${row.title}` : row.title,
       body: row.body,
       dimension: dim ?? 'usage',
       tag: dim ? DIMENSION_TAG[dim] : 'cost',
       impactLabel: impactLabel(row.est_impact, dim),
+    };
+  });
+}
+
+/** Evidence-grounded wins narrated by the agent over deterministic KPI rows. */
+export async function getStrengths(
+  scope: ScopeKind,
+  scopeId: string,
+): Promise<ImprovementDTO[]> {
+  const insights = await scopeInsights(scope, scopeId, 'attribution');
+  return insights.slice(0, 5).map((row, i) => {
+    const dim = normalizeDimension(row.dimension) ?? 'usage';
+    return {
+      rank: i + 1,
+      title: row.subjectName ? `${row.subjectName}: ${row.title}` : row.title,
+      body: row.body,
+      dimension: dim,
+      tag: DIMENSION_TAG[dim],
+      impactLabel: `supports ${DIMENSION_LABEL[dim]}`,
     };
   });
 }
@@ -404,15 +427,42 @@ async function scopeInsights(
   // surfaces show the latest run's insights rather than accumulating across days.
   const filter = client
     .from('insights')
-    .select('title, body, dimension, est_impact, kind, created_at')
+    .select('title, body, dimension, est_impact, kind, rank, date, scope_id, created_at')
     .eq('scope', scope)
     .eq('scope_id', scopeId)
     .eq('kind', kind)
     .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .limit(12) as DbReadFilter;
-  const raw = await selectRows(filter);
-  return raw as unknown as InsightRowLite[];
+    .order('rank', { ascending: true })
+    .limit(40) as DbReadFilter;
+  let rows = await selectRows(filter) as unknown as InsightRowLite[];
+
+  // The scoring engine publishes function L1/L2 from employee rows but deliberately
+  // does not fabricate function-level KPI rows. Consequently, the narration graph has
+  // real employee insights but no function insight input. Management views aggregate
+  // those real employee narratives and identify the person; no score is recomputed.
+  if (scope === 'function' && rows.length === 0) {
+    const employeeFilter = client
+      .from('insights')
+      .select('title, body, dimension, est_impact, kind, rank, date, scope_id, created_at')
+      .eq('function_id', scopeId)
+      .eq('scope', 'employee')
+      .eq('kind', kind)
+      .order('date', { ascending: false })
+      .order('rank', { ascending: true })
+      .limit(80) as DbReadFilter;
+    rows = await selectRows(employeeFilter) as unknown as InsightRowLite[];
+    if (rows.length) {
+      const names = await selectRows(client.from('employees').select('id,name').eq('function_id', scopeId) as DbReadFilter) as Array<{ id: string; name: string }>;
+      const nameById = new Map(names.map((person) => [person.id, person.name]));
+      rows = rows.map((row) => ({ ...row, subjectName: nameById.get(row.scope_id) }));
+    }
+  }
+
+  const latestDate = rows[0]?.date;
+  const latest = latestDate ? rows.filter((row) => row.date === latestDate) : [];
+  return latest.sort((a, b) => kind === 'improvement'
+    ? Number(b.est_impact ?? 0) - Number(a.est_impact ?? 0) || a.rank - b.rank
+    : a.rank - b.rank);
 }
 
 function normalizeDimension(d: string | null): Dimension | null {
