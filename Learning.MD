@@ -138,3 +138,22 @@
 **Deepest why type:** `integration`
 **Action taken:** Keep OTLP unchanged as the primary activity feed and add a metadata-only PostToolUse bridge. It requires the lifecycle envelope to contain both the `gh pr create` command and its returned PR URL; its bearer resolves the existing hashed personal connection, its repo must pass both internal scopes, its PR is verified through the GitHub App, and the linker accepts the beacon only for the exact connection/session pair at `pr_link@0.99`.
 **Preventive action:** Every cross-system evidence join must define a stable identity key, an authorization boundary, a provider-independent payload allowlist, and an Admin-visible pending/linked state before it can influence delivery attribution.
+
+### 2026-07-18 — Valid Codex OTLP activity landed in 1970
+
+**Symptom:** A real Codex session delivered nine OTLP events, but its session timestamp was `1970-01-01`, so the honest 28-day Admin window excluded it.
+**Why 1:** Codex emitted `timeUnixNano="0"` for otherwise valid log records.
+**Why 2:** The normalizer treated every digit-only timestamp as authoritative, including zero.
+**Why 3:** The first live trial covered payload privacy and aggregation but not the provider's absent-timestamp sentinel.
+**Deepest why type:** `integration`
+**Action taken:** Treat non-positive provider times as absent, try observed time before collector receipt time, and repair existing zero-time events and their session bounds only from immutable database `created_at` values.
+**Preventive action:** Connector contract tests must include absent, zero, malformed, observed-only, and valid timestamps; live validation must assert the resulting session falls inside its actual measurement window.
+
+### 2026-07-18 — PR-link hooks need field-level envelope contracts
+
+**Symptom:** The first real `gh pr create` Codex run produced its PR and OTLP session, but no automatic PR-link row appeared.
+**Why 1:** The bridge searched the entire serialized hook envelope instead of consuming the provider's documented command and response fields explicitly.
+**Why 2:** Whole-envelope matching made successful behavior dependent on transport serialization details and left no safe reason when a beacon was skipped.
+**Deepest why type:** `integration`
+**Action taken:** Parse `tool_input.command`, `tool_response`, and `session_id` explicitly, retain the `gh pr create` intent guard, and add opt-in metadata-only skip/status diagnostics without logging the envelope.
+**Preventive action:** Every lifecycle-hook adapter must test its documented input envelope and expose content-free diagnostics for missing intent, response URL, identity, and delivery status.

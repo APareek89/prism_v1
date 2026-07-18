@@ -67,12 +67,31 @@ function firstBoolean(attrs: Record<string, unknown>, keys: string[]): boolean |
 }
 
 function timestamp(record: JsonObject): string {
-  const raw = record.timeUnixNano ?? record.time_unix_nano ?? record.observedTimeUnixNano;
-  if (typeof raw === 'string' && /^\d+$/.test(raw)) {
+  const candidates = [
+    record.timeUnixNano,
+    record.time_unix_nano,
+    record.observedTimeUnixNano,
+    record.observed_time_unix_nano,
+  ];
+
+  for (const raw of candidates) {
     try {
-      return new Date(Number(BigInt(raw) / 1_000_000n)).toISOString();
+      const nanos = typeof raw === 'bigint'
+        ? raw
+        : typeof raw === 'string' && /^\d+$/.test(raw)
+          ? BigInt(raw)
+          : typeof raw === 'number' && Number.isSafeInteger(raw)
+            ? BigInt(raw)
+            : 0n;
+      // Codex currently emits timeUnixNano="0" for some OTLP logs. Zero is an
+      // absent provider timestamp, not 1970 evidence, so continue to the observed
+      // timestamp before falling back to the collector receive time.
+      if (nanos <= 0n) continue;
+      const parsed = new Date(Number(nanos / 1_000_000n));
+      if (Number.isNaN(parsed.getTime())) continue;
+      return parsed.toISOString();
     } catch {
-      // fall through to a safe receive timestamp
+      // Try the next provider timestamp before using a safe receive timestamp.
     }
   }
   return new Date().toISOString();

@@ -56,5 +56,34 @@ describe('normalizeOtelLogs', () => {
     expect(event?.eventName).toBe('otel.log');
     expect(JSON.stringify(event)).not.toContain('private response text');
   });
-});
 
+  it('treats a zero provider timestamp as absent and uses the observed timestamp', () => {
+    const [event] = normalizeOtelLogs({
+      resourceLogs: [{
+        scopeLogs: [{
+          logRecords: [{
+            timeUnixNano: '0',
+            observedTimeUnixNano: '1760000000000000000',
+            body: { stringValue: 'codex.tool_result' },
+          }],
+        }],
+      }],
+    });
+
+    expect(event?.eventTime).toBe('2025-10-09T08:53:20.000Z');
+  });
+
+  it('uses collector receive time when all provider timestamps are absent', () => {
+    const before = Date.now();
+    const [event] = normalizeOtelLogs({
+      resourceLogs: [{
+        scopeLogs: [{ logRecords: [{ timeUnixNano: '0', observedTimeUnixNano: '0' }] }],
+      }],
+    });
+    const after = Date.now();
+
+    const eventTime = Date.parse(event?.eventTime ?? '');
+    expect(eventTime).toBeGreaterThanOrEqual(before);
+    expect(eventTime).toBeLessThanOrEqual(after);
+  });
+});
