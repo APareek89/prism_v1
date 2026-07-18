@@ -1,4 +1,5 @@
-import { getCurrentFunctionId } from '@/lib/db/_base';
+import { getAuthUser } from '@/lib/auth/session';
+import { can } from '@/lib/auth/roles';
 import {
   getMeta,
   getIndex,
@@ -14,23 +15,30 @@ import { SpectrumPanel } from '@/components/panels/SpectrumPanel';
 import { TokenLens } from '@/components/panels/TokenLens';
 import { InsightList } from '@/components/panels/InsightList';
 import { ChangeList } from '@/components/panels/ChangeList';
+import { AnalyticsGrid, MovementExplainer } from '@/components/panels/AnalyticsGrid';
+import { OverviewFilters } from '@/components/panels/OverviewFilters';
+import { getAnalytics, getOverviewFilterContext } from '@/lib/db/analytics';
 import { TrendChart } from '@/components/charts/TrendChart';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PeriodToggle } from '@/components/layout/PeriodToggle';
 import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
 import { INK } from '@/app/tokens';
-import { parsePeriod, WINDOW_DAYS } from '@/lib/config/constants';
+import { parsePeriod } from '@/lib/config/constants';
 
 export const dynamic = 'force-dynamic';
 
 export default async function FunctionView({
   searchParams,
 }: {
-  searchParams: Promise<{ period?: string | string[] }>;
+  searchParams: Promise<{ period?: string | string[]; repo?: string | string[]; team?: string | string[]; manager?: string | string[] }>;
 }) {
   const sp = await searchParams;
   const period = parsePeriod(sp.period);
-  const functionId = await getCurrentFunctionId();
+  const user = await getAuthUser();
+  if (!user || !can(user, 'view_function_aggregates')) {
+    return <div className="page"><PageHeader kicker="Overview" title="Management access required" description="Members use My View and My Actions. Organization aggregates are available to Management and Admin roles." /></div>;
+  }
+  const functionId = user.functionId;
 
   if (!functionId) {
     return (
@@ -46,7 +54,12 @@ export default async function FunctionView({
     );
   }
 
-  const [meta, index, trend, tokenStats, improvements, drivers, roster, live] = await Promise.all([
+  const requested = {
+    repo: typeof sp.repo === 'string' ? sp.repo : '',
+    team: typeof sp.team === 'string' ? sp.team : '',
+    manager: typeof sp.manager === 'string' ? sp.manager : '',
+  };
+  const [meta, index, trend, tokenStats, improvements, drivers, roster, live, filterContext] = await Promise.all([
     getMeta('function', functionId, period),
     getIndex('function', functionId, period),
     getTrend('function', functionId, period),
@@ -55,12 +68,14 @@ export default async function FunctionView({
     getDrivers('function', functionId, period),
     getRoster(functionId),
     getConnectOverview(functionId),
+    getOverviewFilterContext(functionId, requested),
   ]);
+  const analytics = await getAnalytics({ kind: 'function', id: functionId }, filterContext.filter);
 
   return (
     <div className="page">
       <PageHeader
-        kicker="Function impact"
+        kicker="Organization overview"
         title="Is AI-assisted work creating durable value?"
         description="Real delivery evidence and opted-in coding-agent metadata only. Until the deterministic pipeline has enough signal, Prism leaves the index unpublished."
         actions={<PeriodToggle />}
@@ -79,6 +94,13 @@ export default async function FunctionView({
         <SpectrumPanel spectrum={index.spectrum} />
       </div>
 
+      <OverviewFilters context={filterContext} period={period} />
+      <AnalyticsGrid
+        data={analytics}
+        scopeLabel={filterContext.label}
+        scopeCaveat={filterContext.selected.repo ? 'PR and verified-link metrics use the repository filter. Token metrics remain people-scoped because current session metadata has no repository value.' : undefined}
+      />
+
       <div className="row r2">
         <div className="card">
           <div className="cardhead"><h3>AI-Native Index trend</h3><span className="sub">{trend.granularityLabel}</span></div>
@@ -92,13 +114,12 @@ export default async function FunctionView({
           <div className="cardhead"><h3>Highest-leverage improvements</h3><span className="sub">ranked by deterministic index impact</span></div>
           <InsightList items={improvements} limit={5} emptyHint="improvements appear after the first real scored window" />
         </div>
-        <div className="card">
-          <div className="cardhead"><h3>What moved the index</h3><span className="sub">this period vs last</span></div>
-          <ChangeList drivers={drivers} />
-        </div>
+        <MovementExplainer movement={analytics.movement} filtered={filterContext.active} />
       </div>
 
-      <div className="foot">L1 remains the unchanged weighted composite of Usage 10%, Efficiency 25%, Effectiveness 40%, and Proficiency 25%, recomputed on a trailing {WINDOW_DAYS}-day window.</div>
+      {drivers.length ? <div className="card"><div className="cardhead"><h3>Narrative context</h3><span className="sub">agent explanation · never score computation</span></div><ChangeList drivers={drivers} /></div> : null}
+
+      <div className="foot">L1 remains the unchanged deterministic weighted composite of the four dimensions, using the frozen index configuration recorded on each scored row.</div>
     </div>
   );
 }

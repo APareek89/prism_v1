@@ -63,6 +63,8 @@ export const ROUTES = {
   team: '/team',
   member: (memberId: string) => `/team/${memberId}`,
   me: '/me',
+  myActions: '/my-actions',
+  orgActions: '/org-actions',
   connect: '/connect',
   configure: '/configure',
   course: (courseId: string) => `/me/courses/${courseId}`,

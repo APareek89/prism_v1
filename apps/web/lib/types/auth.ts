@@ -16,6 +16,8 @@ export type Capability =
   | 'view_team_aggregates'
   | 'view_member_coaching'
   | 'view_member_raw_prs'
+  | 'manage_own_actions'
+  | 'manage_org_actions'
   | 'edit_config'
   | 'manage_roster'
   | 'manage_connectors'

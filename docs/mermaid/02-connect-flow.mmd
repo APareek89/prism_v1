@@ -5,12 +5,13 @@
 flowchart LR
   A["Admin selects GitHub App installation<br/>FUNCTION · existing or new install"] --> B["GitHub connector sync<br/>FUNCTION · repos + PRs + commits + members"]
   B --> C[("public raw evidence<br/>DATA · real rows only")]
-  C --> D["Connect tab readiness<br/>FUNCTION · team + coverage"]
+  C --> D["Configuration connection step<br/>FUNCTION · org health + allowed methods"]
   D --> E["Assign exact work email<br/>FUNCTION · GitHub employee identity"]
   E --> F["Supabase token + Resend link<br/>FUNCTION · real session + RLS"]
-  F --> G["My workspace<br/>FUNCTION · personal command"]
+  F --> G["My View connection tab<br/>FUNCTION · admin-approved provider + method"]
   D --> G
-  G --> H["Hashed one-time setup<br/>FUNCTION · 15-minute expiry"]
+  G --> H["Hashed one-time terminal setup<br/>FUNCTION · 15-minute expiry"]
+  G --> T["Email invitation path<br/>FUNCTION · Supabase + configured sender"]
   H --> N{"Invite token valid?<br/>FUNCTION · no browser session"}
   N --> I["Local config installer<br/>FUNCTION · backup + prompts off"]
   I --> J["OTLP/HTTP JSON<br/>LIBRARY · per-user token"]
@@ -25,7 +26,7 @@ flowchart LR
   L --> G
   C --> M["Deterministic MAIN + HARNESS engine<br/>FUNCTION · formulas unchanged"]
   L --> M
-  class A,D,E,F,G,H,I,M,P,S fn;
+  class A,D,E,F,G,H,I,M,P,S,T fn;
   class B,C,J,L,R data;
   class K,N,O,Q dec;
   classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;

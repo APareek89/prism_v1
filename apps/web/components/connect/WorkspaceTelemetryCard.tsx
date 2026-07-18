@@ -37,14 +37,18 @@ export function WorkspaceTelemetryCard({
   displayName,
   email,
   overview,
+  allowedProviders = ['codex', 'claude_code'],
+  connectionMethods = ['email', 'terminal'],
 }: {
   signedIn: boolean;
   displayName: string;
   email: string | null;
   overview: PersonalTelemetryOverview | null;
+  allowedProviders?: TelemetryProvider[];
+  connectionMethods?: Array<'email' | 'terminal'>;
 }) {
   const router = useRouter();
-  const [provider, setProvider] = useState<TelemetryProvider>('codex');
+  const [provider, setProvider] = useState<TelemetryProvider>(allowedProviders[0] ?? 'codex');
   const [command, setCommand] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -142,7 +146,7 @@ export function WorkspaceTelemetryCard({
       ) : null}
 
       <div className="workspace-provider-tabs" role="tablist" aria-label="Coding agent">
-        {PROVIDERS.map((item) => {
+        {PROVIDERS.filter((item) => allowedProviders.includes(item.id)).map((item) => {
           const itemState = item.id === 'codex' ? overview?.codex : overview?.claudeCode;
           const live = itemState?.status === 'connected';
           return (
@@ -177,7 +181,7 @@ export function WorkspaceTelemetryCard({
           <p>{command ? 'Copy the entire line and run it in Terminal. Prism will back up your existing config and keep prompt/content logging disabled.' : 'Commands expire after 15 minutes and are shown only once because Prism stores only a hash of the invitation.'}</p>
         </div>
 
-        {command ? (
+        {connectionMethods.includes('terminal') && command ? (
           <div className="workspace-terminal">
             <div className="terminal-chrome"><span /><span /><span /><small>Terminal</small></div>
             <pre><code>{command}</code></pre>
@@ -187,12 +191,14 @@ export function WorkspaceTelemetryCard({
               {expiresAt ? <small>Expires {dateLabel(expiresAt).replace('Last signal ', '')}</small> : null}
             </div>
           </div>
-        ) : (
+        ) : connectionMethods.includes('terminal') ? (
           <button type="button" className="button primary workspace-generate" disabled={working || !overview?.schemaReady} onClick={createCommand}>
             <Icon name="terminal" size={16} />{working ? 'Creating…' : `Generate my ${providerLabel} command`}
           </button>
-        )}
+        ) : <div className="workspace-email-only"><Icon name="info" size={18} /><div><strong>Email-only setup is enabled</strong><p>Check the invitation sent to {email ?? overview?.email ?? 'your work email'}, or ask your administrator to resend it from Configuration.</p></div></div>}
       </div>
+
+      {connectionMethods.includes('email') ? <div className="workspace-method-note"><strong>Email setup available</strong><span>Your administrator can send or resend your secure workspace invitation. {connectionMethods.includes('terminal') ? 'You may also use the terminal command above.' : ''}</span></div> : null}
 
       {notice ? <div className="connect-notice" role="status">{notice}</div> : null}
 

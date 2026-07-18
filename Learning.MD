@@ -166,3 +166,29 @@
 **Deepest why type:** `integration`
 **Action taken:** Override the adapter's invocation kwargs so `top_p` is omitted and Prism keeps temperature zero as its sole sampling control; verify with a focused constructor contract test and a real agent run.
 **Preventive action:** Each configured production model must pass one real structured-output smoke test after either the model id or provider adapter changes; the full-loop operator result must surface agent soft errors.
+
+### 2026-07-18 — Configuration needed a state machine, not a settings dump
+
+**Symptom:** Connection, data consent, index availability, repository scope, organization structure, and access rules were spread across Connect and a read-only model page, so an administrator could not tell what was ready or safely proceed in order.
+**Why 1:** The first MVP optimized for proving individual connectors rather than administering a real organization.
+**Why 2:** Navigation visibility, server authorization, processing consent, and config versioning had not been modeled as one product workflow.
+**Deepest why type:** `design`
+**Action taken:** Add an Admin-only five-step Configuration state machine backed by audited control tables, source availability, dependency reasons, append-only index versions, GitHub-scope narrowing, team structure, and server-enforced role capabilities. Confirmed data categories gate future connector, pipeline-assembly, and analytics inputs at the server boundary. Split personal observation from action into My View and My Actions, and add accountable Org Actions.
+**Preventive action:** Every future organization-level setting must name its prerequisite, authorization capability, persistence/audit owner, effect on historical data, and honest unavailable state before a control is added.
+
+### 2026-07-18 — Exact score precision broke the mobile decision view
+
+**Symptom:** The Overview hero printed the full stored decimal `46.16666666666667`, overflowing the 390px viewport and obscuring the band explanation.
+**Why 1:** The presentation rendered the database numeric directly even though Admin already owns the exact calculation trace.
+**Deepest why type:** `css`
+**Action taken:** Round the decision-view headline to one decimal while preserving exact operands and equations in Admin; verify both Overview and Configuration at 390×844.
+**Preventive action:** Decision surfaces use human-scale precision; exact numeric replay belongs in the evidence trace. Mobile QA must include real non-integer score values.
+
+### 2026-07-18 — Repository filters could silently erase valid token evidence
+
+**Symptom:** Selecting the only measured GitHub repository correctly kept its 10 PRs and 2 exact links but changed 5 real telemetry sessions and 7.6M tokens to zero.
+**Why 1:** GitHub evidence uses a canonical `owner/repo` slug while the current OTLP session rows have no repository value.
+**Why 2:** The first filter implementation applied the GitHub slug directly to `cc_sessions.repo` and treated the resulting empty set as a measured zero.
+**Deepest why type:** `integration`
+**Action taken:** Repository filters now scope PR and verified-link metrics only. Token metrics remain people-scoped and the UI states the attribution limitation explicitly; missing persisted PR buckets are also counted as unclassified rather than displayed as three misleading zeros.
+**Preventive action:** Cross-source filters must prove a normalized join key before narrowing a metric. If the key is absent, retain the valid broader scope and show the limitation instead of converting unknown attribution into zero activity.

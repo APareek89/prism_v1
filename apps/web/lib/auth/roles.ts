@@ -14,14 +14,16 @@ import type { AppRole, AuthUser, Capability } from '@/lib/types';
 const CAPABILITY_GRANTS: Record<Capability, AppRole[]> = {
   // Everyone authenticated can see their own view.
   view_own: ['developer', 'manager', 'function_lead', 'admin'],
-  // Function-level aggregates (median L1, spectrum) are visible to all roles.
-  view_function_aggregates: ['developer', 'manager', 'function_lead', 'admin'],
+  // Organization aggregates exclude members and team-scoped managers.
+  view_function_aggregates: ['function_lead', 'admin'],
   // Team aggregates: managers + function leads (+ admin).
   view_team_aggregates: ['manager', 'function_lead', 'admin'],
   // Per-member coaching narrative (NOT raw PRs): managers + function leads.
   view_member_coaching: ['manager', 'function_lead', 'admin'],
   // Raw PR drill-in for another member: explicitly NO manager. Admin only (audit).
   view_member_raw_prs: ['admin'],
+  manage_own_actions: ['developer', 'manager', 'function_lead', 'admin'],
+  manage_org_actions: ['manager', 'function_lead', 'admin'],
   // Config edits: admin only.
   edit_config: ['admin'],
   // Roster CRUD: admin only.

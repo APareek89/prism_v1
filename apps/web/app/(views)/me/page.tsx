@@ -2,17 +2,21 @@ import { PageHeader, MetaChip } from '@/components/layout/PageHeader';
 import { WorkspaceTelemetryCard } from '@/components/connect/WorkspaceTelemetryCard';
 import { IndexHero } from '@/components/panels/IndexHero';
 import { SpectrumPanel } from '@/components/panels/SpectrumPanel';
-import { CourseCard } from '@/components/panels/CourseCard';
 import { PrInsightList } from '@/components/panels/PrInsightList';
-import { RecommendationList } from '@/components/panels/RecommendationList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getAuthUser } from '@/lib/auth/session';
-import { getMyView, getPrInsights, getRecommendations, getCourse } from '@/lib/db';
+import { getMyView, getPrInsights } from '@/lib/db';
 import { getPersonalTelemetryOverview } from '@/lib/connectors/telemetry/store';
+import { AnalyticsGrid, MovementExplainer } from '@/components/panels/AnalyticsGrid';
+import { getAnalytics } from '@/lib/db/analytics';
+import Link from 'next/link';
+import { getConnectionPolicy } from '@/lib/configuration/store';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MyWorkspacePage() {
+export default async function MyWorkspacePage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab: rawTab } = await searchParams;
+  const tab = rawTab === 'connection' ? 'connection' : 'performance';
   const user = await getAuthUser();
 
   if (!user) {
@@ -34,19 +38,19 @@ export default async function MyWorkspacePage() {
     );
   }
 
-  const [myView, prInsights, recommendations, course, telemetry] = await Promise.all([
+  const [myView, prInsights, telemetry, analytics, connectionPolicy] = await Promise.all([
     getMyView(user.employeeId),
     getPrInsights(user.employeeId),
-    getRecommendations(user.employeeId),
-    getCourse(user.employeeId),
     getPersonalTelemetryOverview({ functionId: user.functionId, employeeId: user.employeeId }),
+    getAnalytics({ kind: 'employee', id: user.employeeId, functionId: user.functionId }),
+    getConnectionPolicy(user.functionId),
   ]);
   const { index, meta } = myView;
 
   return (
     <div className="page">
       <PageHeader
-        kicker="Private workspace"
+        kicker="My View · private"
         title={`Your AI workflow, ${user.displayName.split(' ')[0]}`}
         description="Connect your coding agent, verify that metadata is flowing, and review only the real evidence linked to your account."
         meta={
@@ -59,14 +63,18 @@ export default async function MyWorkspacePage() {
         }
       />
 
-      <WorkspaceTelemetryCard
+      <nav className="view-tabs" aria-label="My View sections"><Link className={tab === 'performance' ? 'active' : ''} href="/me?tab=performance">Performance</Link><Link className={tab === 'connection' ? 'active' : ''} href="/me?tab=connection">Connection</Link></nav>
+
+      {tab === 'connection' ? <><WorkspaceTelemetryCard
         signedIn
         displayName={telemetry.employeeName || user.displayName}
         email={user.email}
         overview={telemetry}
-      />
+        allowedProviders={connectionPolicy.allowedProviders}
+        connectionMethods={connectionPolicy.connectionMethods}
+      /><div className="foot">Your personal token is bound to your identity. Prism stores metadata counters and verified PR links—never prompts, responses, source code, commands, or tool payloads.</div></> : null}
 
-      <section className="workspace-evidence-section">
+      {tab === 'performance' ? <section className="workspace-evidence-section">
         <div className="section-heading">
           <div><span className="page-kicker">Your evidence</span><h2>What Prism can responsibly say today</h2></div>
           <span className="count-badge">{meta.prsInWindow ?? 0} merged PRs in window</span>
@@ -77,23 +85,26 @@ export default async function MyWorkspacePage() {
           <SpectrumPanel spectrum={index.spectrum} showVsSquad />
         </div>
 
-        <div className="row" style={{ gridTemplateColumns: '1fr' }}>
-          <CourseCard course={course} />
-        </div>
+        <PersonalSignals spectrum={index.spectrum} />
+        <AnalyticsGrid data={analytics} personal />
+        <MovementExplainer movement={analytics.movement} />
 
-        <div className="row r2">
+        <div className="row" style={{ gridTemplateColumns: '1fr' }}>
           <div className="card">
-            <div className="cardhead"><h3>Recent PR insights</h3><span className="sub">real linked evidence only</span></div>
+            <div className="cardhead"><h3>Recent evidence notes</h3><span className="sub">narrative over real linked PRs</span></div>
             {prInsights.length ? <PrInsightList insights={prInsights} /> : <EmptyState compact title="No linked PR insights yet" hint="connect your coding agent and run the production pipeline" />}
           </div>
-          <div className="card">
-            <div className="cardhead"><h3>Recommended for you</h3><span className="sub">monitored for adoption</span></div>
-            {recommendations.length ? <RecommendationList recommendations={recommendations} /> : <EmptyState compact title="No recommendation yet" hint="Prism waits for enough evidence instead of inventing guidance" />}
-          </div>
         </div>
-      </section>
+      </section> : null}
 
-      <div className="foot">Your workspace is private. Managers see function-level aggregates and coaching themes—not your raw session content.</div>
+      <div className="foot">Your workspace is private. Managers see only their configured team’s coaching boundary—not your raw session content.</div>
     </div>
   );
+}
+
+function PersonalSignals({ spectrum }: { spectrum: Awaited<ReturnType<typeof getMyView>>['index']['spectrum'] }) {
+  const scored = spectrum.filter((item) => item.score !== null).sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  const strong = scored.filter((item) => (item.score ?? 0) >= 60);
+  const improve = scored.filter((item) => (item.score ?? 100) < 60);
+  return <div className="personal-signal-grid"><section className="card"><div className="cardhead"><h3>Going well</h3><span className="sub">high deterministic dimensions</span></div>{strong.length ? strong.map((item) => <div className="personal-signal" key={item.dimension}><span>{item.label}</span><strong>{item.score?.toFixed(1)}</strong><p>This dimension is at or above 60 from qualifying evidence in the current window.</p></div>) : <EmptyState compact title="No high dimension yet" hint="this is an observation, not a recommendation" />}</section><section className="card"><div className="cardhead"><h3>Needs improvement</h3><span className="sub">low or missing dimensions</span></div>{improve.length ? improve.map((item) => <div className="personal-signal needs" key={item.dimension}><span>{item.label}</span><strong>{item.score?.toFixed(1)}</strong><p>This dimension is below 60. Open My Actions for evidence-backed next steps.</p></div>) : <EmptyState compact title="Nothing scored low" hint="missing evidence remains unpublished" />}</section></div>;
 }

@@ -26,6 +26,7 @@ import { isConfigured } from '@/lib/config/env';
 import { computeDaily } from '@/lib/scoring/compute-daily';
 import { assembleMembers } from './assemble';
 import { persistComputeDaily } from './persist';
+import { getProcessingPolicy } from '@/lib/configuration/policy';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Summary shape
@@ -107,6 +108,8 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummar
   const { functionId, date } = args;
   const steps: PipelineStepLog[] = [];
   const errors: string[] = [];
+  const processingPolicy = await getProcessingPolicy(functionId);
+  steps.push({ step: 'policy:data', ok: true, detail: processingPolicy.confirmed ? `${processingPolicy.enabledKeys.size} approved categories` : 'legacy policy (Data configuration not confirmed)' });
 
   // 1. INGEST — each connector guarded; not-configured ones are skipped.
   await step(steps, 'ingest:github', isConfigured('github'), async () => {
@@ -115,7 +118,7 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummar
     return `prs=${r.prsUpserted} commits=${r.commitsUpserted} reverts=${r.revertsMarked}`;
   });
 
-  await step(steps, 'ingest:sentry', isConfigured('sentry'), async () => {
+  await step(steps, 'ingest:sentry', isConfigured('sentry') && processingPolicy.enabled('sentry.incidents'), async () => {
     const r = await ingestSentry(functionId);
     if (r.errors?.length) errors.push(...r.errors.map((e) => `sentry: ${e}`));
     return `written=${r.written} skipped=${r.skipped}`;

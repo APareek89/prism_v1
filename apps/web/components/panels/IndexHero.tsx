@@ -43,7 +43,7 @@ export function IndexHero({ index, vsSquad = false }: IndexHeroProps) {
       <div>
         <div className="eyebrow">{eyebrow}</div>
         <div className="bignum">
-          {index.l1}
+          {Number(index.l1.toFixed(1))}
           <span>/100</span>
         </div>
         {delta ? (
