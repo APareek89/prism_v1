@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 0c441bb · branch: `codex/product-hardening-qa` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: 8b60b82 · branch: `codex/product-hardening-handoff` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -10,11 +10,11 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 - ✅ Shipped through Configuration milestone PR #14: real-data UI, GitHub/Supabase/Resend/OTLP/PR-link connections, Admin calculation lab, lab-only dogfooding, deterministic scoring, role-aware configuration/actions, and Render `https://prism-v1.onrender.com` (see git log + `Learning.MD`).
 - ✅ Live scope remains `APareek89/prism-measurement-lab`; the 2026-07-18 run produced 10 PRs, 23 commits, 13 KPI rows, 5 index rows, function index `46.1667`/L2/medium, and 8 real employee insights. No synthetic `public.*` rows.
-- 🟡 Product-hardening branch complete: Configure input focus survives typing; Connect has a back path; Index opens Admin details in a new tab; L2 definitions and honest prior-period states appear on Overview/My View; Overview includes grounded wins/gaps; My View fetches only the active tab; all primary routes fit 390px.
-- 🟡 Telemetry audit: historical GPT-5.6 sessions are real but persisted with zero counters because the OTLP normalizer missed Codex `*_token_count`/`slug` attributes. New events capture them without double-counting cached input; historical discarded attributes cannot be reconstructed, so UI says “Counters not captured.” Real Claude history also exists for the owner.
-- 🟡 Analytics comparisons use selected calendar windows, preserve prior-only providers, associate verified links with the PR merge window, and remain unavailable until a complete real baseline exists. Daily becomes comparable on the next measured day; weekly/monthly need 7/30-day prior coverage.
-- 🟡 Enterprise connection guidance covers local, remote/cloud workstation, centrally managed rollout, and Claude Code on Vertex AI. The installer must run where the coding agent executes; it does not collect OpenAI-hosted Codex cloud activity.
-- ✅ Verification on this branch: 310 tests, workspace typecheck/lint/build, diff check, authenticated browser flows with zero console errors, and 390px overflow checks for Overview, Configure, My View Connection, and My View Performance.
+- ✅ Product hardening shipped in PR #16 / main `8b60b82`: Configure input focus survives typing; Connect has a back path; Index opens Admin details in a new tab; L2 definitions and honest prior states appear on Overview/My View; Overview includes grounded wins/gaps; active tabs fetch only their own data; all primary routes fit 390px.
+- ✅ Telemetry audit shipped: historical GPT-5.6 sessions are real but persisted with zero counters because the privacy normalizer missed Codex `*_token_count`/`slug` attributes. New events capture them without cache double-counting; unrecoverable history says “Counters not captured.” Real Claude history also exists for the owner.
+- ✅ Selected calendar comparisons preserve prior-only providers, associate verified links with the PR merge window, and wait for complete real baselines. Daily becomes comparable on the next measured day; weekly/monthly need 7/30-day prior coverage.
+- ✅ Local, remote/cloud workstation, centrally managed, and Claude Code on Vertex guidance is live. The installer runs where the coding agent executes; it does not collect OpenAI-hosted Codex cloud activity.
+- ✅ Verification: 310 tests, workspace typecheck/lint/build, diff check, authenticated local + production browser flows with zero console errors, and 390px checks for Overview, Configure, My View Connection/Performance. Render deploy `dep-d9dq5drbc2fs73fjb8q0` is live with `production`/`demoMode:false`/`db:ok`.
 
 ## Product/architecture decisions
 
@@ -32,7 +32,6 @@ Ship a real-input AI-Native Engineering Index: GitHub supplies delivery/team evi
 
 ## Next
 
-- Commit, push, open/merge the product-hardening PR, then verify Render health and authenticated production surfaces; do not include unrelated untracked `integration-map.md` or `prd-visual.html`.
 - Owner confirms Data processing and unchanged Index v1, then repository/people/access configuration; no consent step is auto-approved.
 - GitHub safeguard: at `https://github.com/settings/installations/143692925`, leave only `APareek89/prism-measurement-lab`; GitHub-selected repos remain authoritative on setup callbacks.
 - Verify a Resend domain before team rollout; `DIGEST_FROM_EMAIL` remains blank. Full FMEA/paid evals require explicit owner approval.
