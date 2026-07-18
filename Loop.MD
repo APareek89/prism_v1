@@ -27,6 +27,7 @@ CI: none in this local-only repository
 | 6 | Search visible UI and source for cost claims | No product surface reports dollars or hours saved; measured tokens are the only cost-like unit. |
 | 7 | Compare MAIN and HARNESS presentations | Harness is always labeled as a separate practice index and is never visually or mathematically folded into MAIN. |
 | 8 | Open `/connect`, activate a real GitHub installation, assign an email, then connect a personal coding agent from `/me` | The selected repo scope and real team are visible; Supabase links exactly one employee; the one-time installer keeps prompt logging off; arbitrary OTLP bodies/attributes never persist. |
+| 9 | Open `/admin` as an administrator, choose a person/date, and inspect a KPI through to its evidence | The page replays the unchanged scoring engine, shows raw → normalized → weighted contribution plus confidence/cohort/L0/L5 gates, and keeps stored agent narration visually separate from deterministic math. |
 
 ## Golden set — paid coaching quality checks
 
@@ -48,3 +49,4 @@ CI: none in this local-only repository
 | 2026-07-17 | A decision-first experience can improve comprehension without changing computed indexes. | Rung 1 passed; free behaviors 1–7 passed through browser and source checks. | $0 |
 | 2026-07-17 | A single-admin/single-org connection flow can prove real GitHub + per-user OTLP ingestion without mixing live people into demo scoring. | Rung 1 passed (292 tests); real GitHub sync ingested 22 PRs/58 commits and discovered 3 people; free behavior 8 passed via browser, temp-config installer, sanitized collector batch, and cleanup. | $0 |
 | 2026-07-17 | Exact-email Supabase identity plus a private workspace command can replace every demo surface without changing index logic. | Rung 1 passed (294 tests, typecheck, production build); v3 schema removed; 0 demo employees and 4 active GitHub employees remain; sign-in passed desktop/mobile browser checks. | $0 |
+| 2026-07-18 | An admin-only read model can make every score contribution auditable without copying or changing scoring formulas. | Rung 1 passed (297 tests, typecheck, production build); authenticated desktop/mobile behavior 9 passed with zero overflow and zero console errors; all 3 diagrams validate. | $0 |
