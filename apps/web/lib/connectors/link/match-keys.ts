@@ -1,13 +1,12 @@
 // lib/connectors/link/match-keys.ts
 //
 // PURE scoring for the AI→PR association (PRD §6, migration 0010 pr_ai_link).
-// Given a merged PR and a candidate Claude Code session, decide whether they are the
-// same unit of work and with what confidence + method. CORRELATIONAL only — this
-// score is NEVER an input to the AI-Native Index; it powers the "this PR was
-// AI-assisted" correlational badge.
+// Given a merged PR and a candidate Codex/Claude Code session, decide whether they are
+// the same unit of work and with what confidence + method. This module only resolves
+// evidence identity; the deterministic scoring engine remains the sole score owner.
 //
 // Four independent signals, strongest wins:
-//   • pr_link   — the session emitted a first-party Claude Code `pr-link` event whose
+//   • pr_link   — a trusted provider hook emitted a metadata-only `pr-link` event whose
 //                 (repository, number) equals this PR's (repo, number). This is a DIRECT
 //                 session→PR identity recorded by Claude Code itself when it opened /
 //                 pushed the PR — not a heuristic. It is repo-scoped and PR-unique, so it
@@ -70,8 +69,8 @@ export interface PrKeys {
 
 /** The minimal session side of a match (the join keys only). */
 export interface SessionKeys {
-  /** PR identities this session explicitly linked to via Claude Code `pr-link`
-   *  events (the exact first-party session→PR assertions). */
+  /** PR identities this session explicitly linked to via a provider `pr-link`
+   *  hook (the exact first-party session→PR assertions). */
   prRefs?: readonly PrRef[];
   /** session branch (cc_sessions.branch). */
   branch: string | null | undefined;
@@ -129,7 +128,7 @@ function shaEq(a: string, b: string): boolean {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * True when the session explicitly linked to THIS PR via a Claude Code `pr-link`
+ * True when the session explicitly linked to THIS PR via a provider `pr-link`
  * event — i.e. one of the session's prRefs equals the PR's own (repo, number). This
  * is the exact first-party identity signal (strongest, repo-scoped, PR-unique).
  */

@@ -128,3 +128,13 @@
 **Deepest why type:** `integration`
 **Action taken:** Wait for the callback/backfill to finish, repeat the transactional evidence reset, pin connector plus function scopes to only the lab, rerun, and verify the sole persisted repo from the live database.
 **Preventive action:** When the measurement scope must exclude a repository, remove it in GitHub App settings as well as Prism; after every setup callback, validate the authoritative repo list before accepting a backfill.
+
+### 2026-07-18 — OTLP activity could not prove which session created a PR
+
+**Symptom:** Prism could receive real Codex/Claude Code usage metadata and real GitHub delivery data, but the two streams still lacked a precise session-to-PR join key.
+**Why 1:** Provider OTLP includes conversation/session identity and activity metadata but does not reliably include the created repository and PR number.
+**Why 2:** Co-author, branch, and time-window inference is either incomplete or too ambiguous for a high-confidence delivery association.
+**Why 3:** The workspace installer configured only OTLP even though both providers expose a post-Bash lifecycle hook that can observe the `gh pr create` URL locally.
+**Deepest why type:** `integration`
+**Action taken:** Keep OTLP unchanged as the primary activity feed and add a metadata-only PostToolUse bridge. Its bearer resolves the existing hashed personal connection, its repo must pass both internal scopes, its PR is verified through the GitHub App, and the linker accepts the beacon only for the exact connection/session pair at `pr_link@0.99`.
+**Preventive action:** Every cross-system evidence join must define a stable identity key, an authorization boundary, a provider-independent payload allowlist, and an Admin-visible pending/linked state before it can influence delivery attribution.

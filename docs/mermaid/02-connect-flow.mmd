@@ -1,5 +1,5 @@
 %% Prism live connection flow
-%% verified: 2026-07-17 real-only login and workspace command
+%% verified: 2026-07-18 OTEL + exact PR-link hook enrichment
 %% files: apps/web/middleware.ts, apps/web/lib/auth/public-paths.ts, apps/web/app/(views)/connect/page.tsx, apps/web/components/connect/ConnectClient.tsx, apps/web/app/auth/callback/route.ts, apps/web/lib/auth/workspace.ts, apps/web/app/(views)/me/page.tsx, apps/web/components/connect/WorkspaceTelemetryCard.tsx, apps/web/app/api/connect/telemetry/install/[provider]/route.ts, apps/web/app/api/connect/telemetry/otel/[...signal]/route.ts, apps/web/lib/connectors/telemetry/store.ts
 %% granularity: master
 flowchart LR
@@ -17,12 +17,17 @@ flowchart LR
   J --> O{"Collector token valid?<br/>FUNCTION · no browser session"}
   O --> K{"Metadata allowlist<br/>FUNCTION · content discarded"}
   K --> L[("telemetry_events + cc_sessions<br/>DATA · deduped metadata")]
+  I --> P["PostToolUse PR bridge<br/>FUNCTION · Codex or Claude Code"]
+  P --> Q{"Bearer + double repo scope<br/>+ GitHub PR verification"}
+  Q --> R[("pr_link_ingest<br/>DATA · session + repo + PR only")]
+  R --> S["Exact connection/session linker<br/>FUNCTION · pr_link@0.99"]
+  S --> C
   L --> G
   C --> M["Deterministic MAIN + HARNESS engine<br/>FUNCTION · formulas unchanged"]
   L --> M
-  class A,D,E,F,G,H,I,M fn;
-  class B,C,J,L data;
-  class K,N,O dec;
+  class A,D,E,F,G,H,I,M,P,S fn;
+  class B,C,J,L,R data;
+  class K,N,O,Q dec;
   classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
   classDef fn fill:#dcfce7,stroke:#16a34a,color:#052e16;
   classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;

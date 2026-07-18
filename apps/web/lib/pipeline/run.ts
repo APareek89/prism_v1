@@ -126,7 +126,7 @@ export async function runPipeline(args: RunPipelineArgs): Promise<PipelineSummar
   await step(steps, 'link:ai_to_pr', isConfigured('github'), async () => {
     const r = await linkAiToPr(functionId);
     if (r.errors?.length) errors.push(...r.errors.map((e) => `link: ${e}`));
-    return `links=${r.linksWritten} prsMarked=${r.prsMarked} sessionsMarked=${r.sessionsMarked}`;
+    return `evidence=${r.prLinkEvidenceRead}/${r.prLinkEvidenceMatched} links=${r.linksWritten} prsMarked=${r.prsMarked} sessionsMarked=${r.sessionsMarked}`;
   });
 
   // 3. BLAME — AI-line capture + 30d retention re-check (no-op when GitHub absent).

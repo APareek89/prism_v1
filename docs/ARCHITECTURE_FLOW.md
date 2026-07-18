@@ -7,8 +7,11 @@ flowchart LR
   K["GitHub App installation"] --> T["Real team + delivery evidence"]
   T --> L["Supabase email login"]
   L --> M["My workspace command"]
-  M --> N["Metadata-only OTLP collector"]
-  N --> A["Live public raw evidence"]
+    M --> N["Metadata-only OTLP collector"]
+    M --> P["Trusted PostToolUse PR bridge"]
+    P --> Q["Verified session → repo#PR evidence"]
+    N --> A["Live public raw evidence"]
+    Q --> A
   T --> A
   A --> B["Deterministic MAIN + HARNESS engine"]
   B --> C{"Role / route context"}
@@ -32,6 +35,7 @@ flowchart LR
 - A login claims only an active, unclaimed employee whose normalized email exactly matches the Supabase user. The first linked real user bootstraps the initial admin role.
 - Hosted login uses a Supabase-generated single-use token delivered by Resend to a Prism callback; local fallback uses Supabase email delivery. Supabase remains the session authority in both cases.
 - The OTLP boundary allowlists session/model/token/turn/prompt-length/success metadata and discards bodies plus unknown attributes before persistence.
+- The same one-time installer adds a provider-specific `PostToolUse(Bash)` hook beside OTLP. It inspects the lifecycle envelope locally but sends only session ID, repo, and PR number; Prism resolves the hashed personal connection, requires the repo in both internal scopes, verifies the PR through the GitHub App, and links only an exact `(connection, session, repo, PR)` match.
 - The web app may derive presentation labels, counts, sorting, and prioritization from already-computed rows; it may not recalculate scores.
 - The agent coaching flow consumes deterministic facts and produces grounded narrative only.
 - Configuration remains append-only: save a version, then recompute all views.
@@ -53,7 +57,9 @@ flowchart LR
 | Shell and navigation | `apps/web/components/layout/*` |
 | Live connection setup | `apps/web/app/(views)/connect/page.tsx`, `apps/web/components/connect/ConnectClient.tsx` |
 | Personal OTLP ingest | `apps/web/app/api/connect/telemetry/**`, `apps/web/lib/connectors/telemetry/**` |
+| Exact session → PR enrichment | `apps/web/app/api/connect/telemetry/pr-link/route.ts`, `apps/web/lib/connectors/pr-link/**`, `apps/web/lib/connectors/link/ai-to-pr.ts` |
 | Connection schema | `apps/web/supabase/migrations/0034_connect_mvp.sql` |
+| PR-link evidence schema | `apps/web/supabase/migrations/0035_pr_link_ingest.sql` |
 | Function view | `apps/web/app/(views)/function/page.tsx` |
 | Team and member views | `apps/web/app/(views)/team/**` |
 | Supabase identity linking | `apps/web/lib/auth/session.ts`, `workspace.ts`, `apps/web/app/auth/**` |

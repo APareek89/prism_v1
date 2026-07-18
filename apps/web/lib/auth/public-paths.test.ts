@@ -7,6 +7,7 @@ describe('isPublicPath', () => {
     expect(isPublicPath('/api/connect/telemetry/install/codex')).toBe(true);
     expect(isPublicPath('/api/connect/telemetry/otel/v1/logs')).toBe(true);
     expect(isPublicPath('/api/connect/telemetry/otel/v1/traces')).toBe(true);
+    expect(isPublicPath('/api/connect/telemetry/pr-link')).toBe(true);
   });
 
   it('keeps browser-session telemetry management endpoints protected', () => {
