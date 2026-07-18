@@ -35,6 +35,7 @@ describe('buildTelemetryInstaller', () => {
     expect(script).toContain('sessionId: sessionId.trim()');
     expect(script).toContain('repo: match[1]');
     expect(script).toContain('prNumber: Number(match[2])');
+    expect(script).toContain('prCreateCommand.test(raw)');
     expect(script).not.toContain('body: raw');
   });
 });

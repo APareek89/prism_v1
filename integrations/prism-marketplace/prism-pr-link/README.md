@@ -1,7 +1,7 @@
 # Prism PR link for Claude Code
 
 This optional marketplace plugin is the fleet-distribution form of the hook already
-installed by Prism's personal workspace command. After a Bash tool creates a GitHub PR,
+installed by Prism's personal workspace command. After a Bash tool runs `gh pr create`,
 it sends only the provider session ID, `owner/repo`, and PR number to Prism. Prompt text,
 source code, commands, and tool output are never included in the request body.
 

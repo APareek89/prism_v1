@@ -3,6 +3,7 @@
 // locally, but only sessionId + owner/repo + PR number cross the network.
 
 const PR_URL_RE = /https?:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)/;
+const PR_CREATE_COMMAND_RE = /\bgh\s+pr\s+create\b/i;
 
 function readStdin() {
   return new Promise((resolve) => {
@@ -21,6 +22,7 @@ async function main() {
   if (!endpoint || !token) return;
 
   const raw = await readStdin();
+  if (!PR_CREATE_COMMAND_RE.test(raw)) return;
   const match = PR_URL_RE.exec(raw);
   if (!match) return;
   let event = {};

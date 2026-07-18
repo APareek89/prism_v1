@@ -9,6 +9,7 @@ const provider = process.env.PRISM_PROVIDER === 'codex' ? 'codex' : 'claude_code
 const bridgeDir = process.env.PRISM_BRIDGE_DIR || path.join(os.homedir(), '.prism');
 const configFile = path.join(bridgeDir, provider + '.json');
 const prUrl = /https?:\/\/github\.com\/([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)\/pull\/(\d+)/;
+const prCreateCommand = /\bgh\s+pr\s+create\b/i;
 
 function debug(message) {
   if (process.env.PRISM_INGEST_DEBUG === '1') {
@@ -56,6 +57,7 @@ async function main() {
   if (!config?.url || !config?.token) return;
 
   const raw = await stdin();
+  if (!prCreateCommand.test(raw)) return;
   const match = prUrl.exec(raw);
   if (!match) return;
   let event = {};
