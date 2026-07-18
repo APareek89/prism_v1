@@ -108,3 +108,13 @@
 **Deepest why type:** `design`
 **Action taken:** Add an admin-only, read-only calculation lab that calls the existing assembler and scoring engine, expands their returned values into an evidence-to-contribution trace, and displays persisted narratives separately.
 **Preventive action:** Any future score or gate must expose its source evidence, configured and effective weights, confidence effect, and deterministic-versus-narrative ownership in the Admin trace before release.
+
+### 2026-07-18 — A wrong GitHub installation looked like a valid empty run
+
+**Symptom:** The first post-reset pipeline run displayed “Complete · 0 PRs” even though the replacement repository contained merged PRs and the GitHub summary contained access errors.
+**Why 1:** The persisted connector still pointed at another account's App installation while its repository scope pointed at the APareek89 lab.
+**Why 2:** Connector failures are deliberately collected as non-fatal pipeline warnings so scoring can continue on available evidence.
+**Why 3:** The temporary Admin control displayed only counts and ignored the returned `ok` and `warnings` fields.
+**Deepest why type:** `integration`
+**Action taken:** Pin the connector to APareek89 installation `143692925`, verify the installation can list the lab before rerunning, and surface failed steps or soft warnings in the Admin control instead of reporting an unqualified success.
+**Preventive action:** Any destructive connector reset must verify `(installation, repository)` access together before deletion, and every operator-facing pipeline control must render structured warnings.
