@@ -1,6 +1,6 @@
 # Prism Codex — handoff
 
-last-synced: 6013ad3 · branch: `codex/admin-measurement-lab` · workspace: `/Users/anandpareek/Documents/Prism_codex`
+last-synced: f17c605 · branch: `codex/admin-measurement-reset` · workspace: `/Users/anandpareek/Documents/Prism_codex`
 
 ## Objective
 
@@ -10,7 +10,9 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 
 - ✅ Shipped: decision-first real-data UI, GitHub team/evidence sync, exact-email Supabase/Resend login, per-user Codex/Claude metadata-only OTEL, deterministic scoring boundary, no demo rows, private GitHub repo, and Render deployment (see git log and `Learning.MD`).
 - ✅ Shipped: installer and OTLP collector routes accept their own invite/bearer credentials without a browser session; management routes remain Supabase-protected. PR #6 is merged and the hosted invalid-invite path returns plain-text 410 rather than HTML.
-- 🔄 In progress: temporary admin-only calculation lab replays the existing assembler + deterministic engine for a selected person/date, expands every KPI/dimension contribution, and joins it to real commits, PRs, sessions, links, insights, and recommendations. Local desktop/mobile checks pass; clean-slate reset and real dogfooding repo are next.
+- ✅ Shipped: PR #7 added the temporary admin-only calculation lab. It replays the existing assembler + deterministic engine, expands every KPI/dimension contribution, and joins it to real commits, PRs, sessions, links, insights, and recommendations. Render `/admin` passed authenticated production QA with no console error or horizontal overflow.
+- ✅ Real evidence prepared: private `APareek89/prism-measurement-lab` has five merged PRs, ten feature/test/fix commits plus its bootstrap commit, recognized GPT co-author trailers, and 14 passing tests. PR #5 deliberately captured a failing evidence-contract test before the fix so rework/course-correction is inspectable.
+- ⏸ Reset gated by GitHub: App installation 143692925 uses selected repositories and still exposes only `APareek89/prism`; the owner must add `APareek89/prism-measurement-lab` in GitHub installation settings before the destructive clean-slate reset and replacement sync.
 
 ## Product/architecture decisions
 
@@ -35,11 +37,12 @@ Deliver a clearer AI-Native Engineering Index plus a real-input MVP: GitHub defi
 ## Gotchas / next
 
 - Test user action: request the APareek89 work-email login at the Render URL, open `/me`, generate Codex or Claude Code setup, run the fresh command, start a new tool session, and refresh status.
-- Before the clean-slate reset, create a private GitHub dogfooding repository with real same-day commits/PRs and restrict the active GitHub connector to it. Never seed `public.*` or backdate evidence.
+- Owner action: open `https://github.com/settings/installations/143692925`, configure the `prismai1989` installation, add `prism-measurement-lab` to selected repositories, and save. Device flow is disabled and the `gh` OAuth token cannot modify a GitHub App installation, so this one GitHub UI approval cannot be automated.
+- After approval, verify the installation client can list the lab, change both connector `config_jsonb.repo_ids` and `functions.repo_ids` to only `APareek89/prism-measurement-lab`, transactionally clear the 16 historical evidence/computed/narrative tables scoped to the function, run the 2026-07-18 pipeline, and verify `/admin` shows only fresh lab evidence.
 - `DIGEST_FROM_EMAIL` is blank (the local Resend API key exists). This does not block hosted auth mail, which uses `AUTH_FROM_EMAIL` or Resend's owner-only default sender. Verify a Resend domain and set both sender variables before inviting the broader team; digest delivery stays off until its sender is configured.
 - Inngest was upgraded to patched `^3.54.2`. `npm audit --omit=dev` still reports one transitive LangSmith high advisory whose offered fix requires the LangChain 0.x → 1.x major upgrade; the affected public-prompt/tracing surfaces are not exposed by Prism, so treat that upgrade as a separate compatibility project.
 - Add the hosted `/auth/callback` to Supabase Auth redirect URLs as defense-in-depth/fallback, and add the hosted `/api/connectors/github/install` URL to the GitHub App setup/callback configuration.
 - Exact AI-session → repo/branch/PR, verification, context-read, and review-loop evidence still needs the metadata-only Prism Bridge/production adapter.
 - `Loop.MD` remains offered. Full FMEA and paid coaching golden evals require owner approval.
 
-**Session efficiency:** 🎯 ~35% fix · 🔧 ~35% verification/deployment · 🔁 ~30% rework (authenticated E2E testing missed the unauthenticated shell path)
+**Session efficiency:** 🎯 ~55% Admin trace + dogfooding evidence · 🔧 ~35% verification/deployment · ⏸ ~10% GitHub installation approval gate
