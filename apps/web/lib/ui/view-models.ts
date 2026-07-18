@@ -88,6 +88,16 @@ export interface ImprovementDTO {
   dimension: Dimension;
   tag: DimensionTag | 'cost';
   impactLabel: string; // "+5 Proficiency" / "−15% tokens"
+  detail?: {
+    observation: string;
+    interpretation: string;
+    alternativeExplanation: string;
+    action: string;
+    expectedSignal: string;
+    verificationPlan: string;
+    doNoHarm: string;
+    confidenceReason?: string;
+  };
 }
 
 /** "What moved the index" driver. */

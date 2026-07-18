@@ -17,15 +17,39 @@ export type AgentKind =
 /** PR-level classification — decided in CODE (classifyPr), not by the LLM. */
 export type PrVerdict = 're_prompt' | 'revert' | 'ai_slop' | 'clean';
 
+/** Structured coaching contract authored by the narrator. Numeric priority,
+ * confidence, and ranking remain deterministic and are attached during persistence. */
+export interface InsightAnalysis {
+  observation: string;
+  interpretation: string;
+  alternativeExplanation: string;
+  action: string;
+  expectedSignal: string;
+  verificationPlan: string;
+  doNoHarm: string;
+}
+
+/** Content-free audit of the grounding gate. Rejected prose is never retained. */
+export interface NarrativeValidationTrace {
+  attempts: number;
+  repaired: boolean;
+  status: 'accepted' | 'dropped';
+  rejectedClaims: string[];
+}
+
 /** A narrative insight emitted by an agent. NO raw numeric score field — est_impact
  *  is computed deterministically and passed in, the agent only narrates it. */
 export interface AgentInsight {
   kind: AgentKind;
+  /** Stable deterministic candidate key (KPI id or movement key). */
+  candidateId: string;
   title: string;
   body: string;
   dimension: Dimension | null;
   /** ids into the provided evidence set (grounding gate validates every one). */
   evidenceRefs: string[];
+  analysis: InsightAnalysis;
+  validation: NarrativeValidationTrace;
 }
 
 /** A change-governance driver entry (▲/▼ "what moved the index"). */
@@ -44,6 +68,8 @@ export interface PrLevelResult {
   reason: string;
   fix: string;
   evidenceRefs: string[];
+  narrativeSource?: 'model' | 'deterministic_fallback';
+  validation?: NarrativeValidationTrace;
 }
 
 /** A piece of evidence the agent may cite. Read-only; agents never do arithmetic. */
@@ -51,6 +77,7 @@ export interface EvidenceRow {
   id: string;
   label: string;
   value: number | string;
+  source?: 'employee' | 'organization_aggregate' | 'delivery';
 }
 
 /** Scope context an agent run is bound to. */

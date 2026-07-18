@@ -16,12 +16,12 @@ import { improvementAreaPrompt } from '../prompts/improvement-area';
 import { SYSTEM_PROMPT } from '../prompts/system';
 import { structured, narrator, shouldUseRealModel } from '../model';
 import { mockImprovementArea } from '../mock-model';
-import { groundedProduce } from './ground-run';
+import { groundedBatchProduce } from './ground-run';
 
 export async function improvementAreaNode(
   state: InsightStateType,
 ): Promise<InsightStateUpdate> {
-  const ranked = rankImprovements(state.valuesVsAnchor);
+  const ranked = rankImprovements(state.valuesVsAnchor, state.scope === 'function' ? 3 : 5);
   if (ranked.length === 0) return { insights: [] };
 
   const areas = ranked.map((r) => r.area);
@@ -29,41 +29,41 @@ export async function improvementAreaNode(
     ? structured(narrator, ImprovementAreaSchema, 'improvement_area')
     : null;
 
-  const insights: AgentInsight[] = [];
-
   // Numbers the model is additionally allowed to quote: each area's normalized score.
   const extraNumbers = areas.flatMap((a) => [a.norm, a.target]);
+  const produced = await groundedBatchProduce(
+    areas.length,
+    async (note, indexes) => {
+      const selected = indexes.map((index) => areas[index]!);
+      if (!runner) return mockImprovementArea(selected, state.evidence).items;
+      const prompt = note
+        ? `${improvementAreaPrompt(state, selected)}\n\n${note}`
+        : improvementAreaPrompt(state, selected);
+      const items = (await runner.invoke(SYSTEM_PROMPT, prompt)).items;
+      return selected.map((area) => items.find((item) => item.candidateId === area.kpiId));
+    },
+    (item) => ({
+      prose: [item.title, item.observation, item.interpretation, item.alternativeExplanation, item.action, item.expectedSignal, item.verificationPlan, item.doNoHarm],
+      evidenceRefs: item.evidenceRefs,
+    }),
+    state.evidence,
+    extraNumbers,
+  );
 
-  for (let i = 0; i < areas.length; i++) {
-    const area = areas[i]!;
-    const single = [area];
-
-    const produced = await groundedProduce(
-      async (note) => {
-        if (runner) {
-          const prompt = note
-            ? `${improvementAreaPrompt(state, single)}\n\n${note}`
-            : improvementAreaPrompt(state, single);
-          const out = await runner.invoke(SYSTEM_PROMPT, prompt);
-          return out.items[0] ?? mockImprovementArea(single, state.evidence).items[0]!;
-        }
-        return mockImprovementArea(single, state.evidence).items[0]!;
-      },
-      (item) => ({ prose: [item.title, item.body], evidenceRefs: item.evidenceRefs }),
-      state.evidence,
-      extraNumbers,
-    );
-
-    if (produced) {
-      insights.push({
-        kind: 'improvement_area',
-        title: produced.title,
-        body: produced.body,
-        dimension: area.dimension,
-        evidenceRefs: produced.evidenceRefs,
-      });
-    }
-  }
+  const insights: AgentInsight[] = produced.flatMap((result, index) => {
+    if (!result) return [];
+    const item = result.item;
+    return [{
+      kind: 'improvement_area',
+      candidateId: item.candidateId,
+      title: item.title,
+      body: `${item.observation} ${item.interpretation}`,
+      dimension: areas[index]!.dimension,
+      evidenceRefs: item.evidenceRefs,
+      analysis: item,
+      validation: result.validation,
+    }];
+  });
 
   return { insights };
 }

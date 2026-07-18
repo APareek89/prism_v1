@@ -20,11 +20,17 @@ import {
   type GroundingResult,
 } from '../grounding';
 import type { EvidenceRow } from '@/lib/types/agents';
+import type { NarrativeValidationTrace } from '@/lib/types/agents';
 
 /** The prose fields of one produced item (for the grounding check). */
 export interface Groundable {
   prose: string[];
   evidenceRefs: string[];
+}
+
+export interface GroundedProduction<T> {
+  item: T;
+  validation: NarrativeValidationTrace;
 }
 
 /**
@@ -41,21 +47,131 @@ export async function groundedProduce<T>(
   toGroundable: (item: T) => Groundable,
   evidence: EvidenceRow[],
   extraNumbers: ReadonlyArray<number | null | undefined> = [],
-): Promise<T | null> {
+): Promise<{ item: T; validation: NarrativeValidationTrace } | null> {
   const allowed = buildAllowedNumbers(evidence, extraNumbers);
   const ids = evidenceIdSet(evidence);
 
   const first = await produce(null);
   const g1 = gate(first, toGroundable, allowed, ids);
-  if (g1.ok) return first;
+  if (g1.ok) {
+    return {
+      item: first,
+      validation: { attempts: 1, repaired: false, status: 'accepted', rejectedClaims: [] },
+    };
+  }
 
   // One repair retry with a corrective note.
   const repaired = await produce(repairNote(g1.violations));
   const g2 = gate(repaired, toGroundable, allowed, ids);
-  if (g2.ok) return repaired;
+  if (g2.ok) {
+    return {
+      item: repaired,
+      validation: {
+        attempts: 2,
+        repaired: true,
+        status: 'accepted',
+        rejectedClaims: g1.violations.map((violation) => violation.detail),
+      },
+    };
+  }
 
   // Still failing → drop.
   return null;
+}
+
+/**
+ * Ground a whole ordered narrative batch with at most one shared repair call.
+ *
+ * `produce` receives the original item indexes it must narrate and must return its
+ * answers in that same order. Only rejected or omitted items are sent to the retry,
+ * so a scope with several insights uses one model call in the healthy path and two
+ * in the repair path instead of one or two calls per insight.
+ */
+export async function groundedBatchProduce<T>(
+  itemCount: number,
+  produce: (note: string | null, indexes: readonly number[]) => Promise<ReadonlyArray<T | undefined>>,
+  toGroundable: (item: T) => Groundable,
+  evidence: EvidenceRow[],
+  extraNumbers: ReadonlyArray<number | null | undefined> = [],
+): Promise<Array<GroundedProduction<T> | null>> {
+  if (itemCount === 0) return [];
+
+  const allowed = buildAllowedNumbers(evidence, extraNumbers);
+  const ids = evidenceIdSet(evidence);
+  const allIndexes = Array.from({ length: itemCount }, (_, index) => index);
+  const first = await produce(null, allIndexes);
+  const firstChecks = allIndexes.map((index) => batchGate(first[index], index, toGroundable, allowed, ids));
+  const rejectedIndexes = allIndexes.filter((index) => !firstChecks[index]!.ok);
+  let repaired: ReadonlyArray<T | undefined> = [];
+  if (rejectedIndexes.length) {
+    try {
+      repaired = await produce(batchRepairNote(firstChecks, rejectedIndexes), rejectedIndexes);
+    } catch {
+      // A failed repair must not discard items that already passed the first gate.
+      // Rejected items remain dropped; the scope-level pipeline can still publish the
+      // independently accepted contracts.
+      repaired = [];
+    }
+  }
+
+  return allIndexes.map((index) => {
+    const initial = firstChecks[index]!;
+    if (initial.ok && initial.item !== null) {
+      return {
+        item: initial.item,
+        validation: { attempts: 1, repaired: false, status: 'accepted', rejectedClaims: [] },
+      };
+    }
+
+    const repairedPosition = rejectedIndexes.indexOf(index);
+    const retry = batchGate(repaired[repairedPosition], index, toGroundable, allowed, ids);
+    if (!retry.ok || retry.item === null) return null;
+
+    return {
+      item: retry.item,
+      validation: {
+        attempts: 2,
+        repaired: true,
+        status: 'accepted',
+        rejectedClaims: initial.violations,
+      },
+    };
+  });
+}
+
+interface BatchGate<T> {
+  ok: boolean;
+  item: T | null;
+  violations: string[];
+}
+
+function batchGate<T>(
+  item: T | undefined,
+  index: number,
+  toGroundable: (item: T) => Groundable,
+  allowed: Set<string>,
+  ids: Set<string>,
+): BatchGate<T> {
+  if (item === undefined) {
+    return { ok: false, item: null, violations: [`missing narrative for item ${index + 1}`] };
+  }
+  const result = gate(item, toGroundable, allowed, ids);
+  return {
+    ok: result.ok,
+    item,
+    violations: result.violations.map((violation) => violation.detail),
+  };
+}
+
+function batchRepairNote<T>(checks: BatchGate<T>[], indexes: readonly number[]): string {
+  const details = indexes.flatMap((index) =>
+    checks[index]!.violations.map((violation) => `- Item ${index + 1}: ${violation}`),
+  );
+  return [
+    'Your previous batch answer was rejected by the grounding gate for the items below.',
+    'Return only corrected narratives for these items, in the supplied order:',
+    ...details,
+  ].join('\n');
 }
 
 function gate<T>(

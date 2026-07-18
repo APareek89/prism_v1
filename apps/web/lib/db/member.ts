@@ -21,6 +21,7 @@ import type {
 } from '@/lib/ui/view-models';
 import { DIMENSION_TAG } from '@/lib/ui/view-models';
 import { NO_SIGNAL, fmtTokens } from '@/lib/format';
+import { decodePrInsight } from '@/lib/pr-insight';
 import { getIndex, getMeta } from './index-read';
 import type { Period } from '@/lib/config/constants';
 import {
@@ -218,46 +219,22 @@ export async function getPrInsights(employeeId: string): Promise<PrInsightDTO[]>
   // pr_level insights are scoped to the employee; flag/size live in evidence_jsonb.
   const raw = await employeeInsights(employeeId, 'pr_level');
   return (raw as unknown as PrInsightLite[]).map((row, i) => {
-    const refs = evidenceRefs(row.evidence_jsonb);
-    const flag = inferFlag(row.title, row.body);
+    const decoded = decodePrInsight(row.evidence_jsonb, row.title, row.body);
+    const flag = decoded.flag;
     const tone = flagTone(flag);
     const dim = normalizeDimension(row.dimension);
     return {
-      prNumber: extractPrNumber(refs) ?? `#${i + 1}`,
+      prNumber: decoded.prNumber ?? `#${i + 1}`,
       flag,
       flagTone: tone,
       title: row.title,
-      sizeBucket: inferSize(refs),
+      sizeBucket: decoded.sizeBucket ?? 'M',
       summary: row.body,
       suggestion: null,
       tag: dim ? DIMENSION_TAG[dim] : 'usage',
       tagLabel: flagLabel(flag),
     };
   });
-}
-
-/**
- * Pull a list of string refs out of the evidence_jsonb payload. The column is jsonb
- * (object or array); we accept either a bare array of strings or a `{ refs: [...] }`
- * shape, and fall back to [] otherwise. No fabricated refs.
- */
-function evidenceRefs(evidence: unknown): string[] | null {
-  if (Array.isArray(evidence)) {
-    return evidence.filter((v): v is string => typeof v === 'string');
-  }
-  if (evidence && typeof evidence === 'object') {
-    const refs = (evidence as { refs?: unknown }).refs;
-    if (Array.isArray(refs)) return refs.filter((v): v is string => typeof v === 'string');
-  }
-  return null;
-}
-
-function inferFlag(title: string, body: string): PrInsightDTO['flag'] {
-  const t = `${title} ${body}`.toLowerCase();
-  if (t.includes('revert')) return 'revert';
-  if (t.includes('slop')) return 'ai-slop';
-  if (t.includes('re-prompt') || t.includes('reprompt') || t.includes('iteration')) return 're-prompt';
-  return 'clean';
 }
 function flagTone(flag: PrInsightDTO['flag']): PrInsightDTO['flagTone'] {
   if (flag === 'clean') return 'ok';
@@ -276,21 +253,6 @@ function flagLabel(flag: PrInsightDTO['flag']): string {
       return 'ai-slop';
   }
 }
-function extractPrNumber(refs: string[] | null): string | null {
-  if (!refs) return null;
-  const hit = refs.find((r) => /#?\d+/.test(r));
-  if (!hit) return null;
-  const m = hit.match(/\d+/);
-  return m ? `#${m[0]}` : null;
-}
-function inferSize(refs: string[] | null): PrInsightDTO['sizeBucket'] {
-  if (!refs) return 'M';
-  const joined = refs.join(' ');
-  if (/\bL\b/.test(joined)) return 'L';
-  if (/\bS\b/.test(joined)) return 'S';
-  return 'M';
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
 // getRecommendations
 // ─────────────────────────────────────────────────────────────────────────────

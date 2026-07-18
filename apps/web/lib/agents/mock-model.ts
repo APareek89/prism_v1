@@ -48,10 +48,15 @@ export function mockImprovementArea(
     const label = DIMENSION_LABEL[a.dimension];
     const refs = refsForDimension(evidence, a.dimension);
     return {
+      candidateId: a.kpiId,
       title: `Lift ${label} on ${a.kpiId}`,
-      body:
-        `${label} sits below its target on ${a.kpiId}; closing the gap toward the ` +
-        `anchor target is the highest-leverage move for this scope.`,
+      observation: `${label} sits below its target on ${a.kpiId}.`,
+      interpretation: `The measured gap makes this a priority for the next improvement cycle.`,
+      alternativeExplanation: `The result may reflect sparse coverage or a temporary change in work mix.`,
+      action: `Choose one repeatable workflow change that directly addresses ${a.kpiId}.`,
+      expectedSignal: `The next measured window should show a healthier ${a.kpiId} signal.`,
+      verificationPlan: `Compare the same KPI after the action has had a full measured window to operate.`,
+      doNoHarm: `Do not optimize this metric by increasing delivery risk or reducing necessary review.`,
       evidenceRefs: firstRef(refs.length > 0 ? refs : [`kpi:${a.kpiId}`].filter((id) => evidence.some((e) => e.id === id))),
     };
   });
@@ -72,8 +77,15 @@ export function mockChangeGovernance(
     const key = d.dimension ?? 'l1';
     const refs = refsForDimension(evidence, key);
     return {
+      candidateId: d.key,
       title: `${label} ${dirWord}`,
-      body: `${label} ${dirWord} versus the baseline window, moving the index for this scope.`,
+      observation: `${label} ${dirWord} versus the baseline window.`,
+      interpretation: `This movement is material enough to review alongside the current delivery mix.`,
+      alternativeExplanation: `Coverage or the mix of work may have changed between the two windows.`,
+      action: `Review the workflow behind ${label} and preserve the practices associated with the healthier window.`,
+      expectedSignal: `${label} should move in the intended direction in the next comparable window.`,
+      verificationPlan: `Recheck the same scope and baseline after another complete measurement window.`,
+      doNoHarm: `Do not trade reliability or necessary review for a faster metric movement.`,
       evidenceRefs: firstRef(refs),
     };
   });
@@ -92,10 +104,15 @@ export function mockImprovementAttribution(
     const label = DIMENSION_LABEL[s.dimension];
     const refs = refsForDimension(evidence, s.dimension);
     return {
+      candidateId: s.kpiId,
       title: `${label} is holding strong`,
-      body:
-        `${label} is at or above its anchor target on ${s.kpiId}, a genuine strength ` +
-        `worth protecting as volume grows.`,
+      observation: `${label} is at or above its anchor target on ${s.kpiId}.`,
+      interpretation: `This is a measured strength worth protecting as delivery volume changes.`,
+      alternativeExplanation: `The result may be influenced by the current work mix or limited coverage.`,
+      action: `Document and repeat the workflow associated with this ${label} result.`,
+      expectedSignal: `${s.kpiId} should remain healthy as new work enters the measurement window.`,
+      verificationPlan: `Confirm the KPI remains healthy in the next comparable measured window.`,
+      doNoHarm: `Preserve quality controls instead of chasing the metric in isolation.`,
       evidenceRefs: firstRef(refs.length > 0 ? refs : []),
     };
   });

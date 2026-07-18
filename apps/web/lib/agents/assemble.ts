@@ -13,7 +13,7 @@
 // SERVER-ONLY.
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import type { Dimension, Band, ConfidenceBand, KpiId } from '@/lib/scoring/types';
+import type { Dimension, Band, ConfidenceBand, KpiId, KpiAnchor } from '@/lib/scoring/types';
 import type { EvidenceRow, PrVerdict } from '@/lib/types/agents';
 import { DEFAULT_INDEX_CONFIG } from '@/lib/scoring/defaults/index-config.default';
 import type { InsightStateType, ValueVsAnchor, DeltaRow, PrRecord } from './state';
@@ -39,7 +39,13 @@ function looseDb(): LooseDb {
   return createAdminClient() as unknown as LooseDb;
 }
 function rows(result: { data: unknown; error: unknown }): Record<string, unknown>[] {
-  if (result.error || !Array.isArray(result.data)) return [];
+  if (result.error) {
+    const message = typeof result.error === 'object' && result.error && 'message' in result.error
+      ? String((result.error as { message?: unknown }).message ?? 'database query failed')
+      : String(result.error);
+    throw new Error(message);
+  }
+  if (!Array.isArray(result.data)) return [];
   return result.data as Record<string, unknown>[];
 }
 function numOrNull(v: unknown): number | null {
@@ -77,11 +83,62 @@ const KPI_DIMENSION: Record<KpiId, Dimension> = {
   multiplier_signal: 'proficiency',
 };
 
-const DIMENSION_WEIGHT = DEFAULT_INDEX_CONFIG.weights;
+export interface NarrativeConfig {
+  configVersion: string;
+  weights: Record<Dimension, number>;
+  anchors: Record<KpiId, KpiAnchor>;
+}
+
+/** Load the exact versioned weights/anchors stamped on this function/date score run. */
+export async function loadNarrativeConfig(functionId: string, date: string): Promise<NarrativeConfig> {
+  const scored = rows(
+    await looseDb()
+      .from('index_daily')
+      .select('config_version,function_id,scope,scope_id,date')
+      .eq('function_id', functionId)
+      .eq('scope', 'function')
+      .eq('scope_id', functionId)
+      .eq('date', dayOnly(date))
+      .limit(1),
+  )[0];
+  const scoredVersion = num(scored?.config_version);
+  if (scoredVersion <= 0) throw new Error('scored function row has no valid configuration version');
+  const result = rows(
+    await looseDb()
+      .from('index_config')
+      .select('version,weights_jsonb,anchors_jsonb,function_id')
+      .eq('function_id', functionId)
+      .eq('version', scoredVersion)
+      .limit(1),
+  )[0];
+  if (!result) throw new Error(`index configuration v${scoredVersion} is unavailable for insight ranking`);
+
+  const rawWeights = object(result.weights_jsonb);
+  const rawAnchors = object(result.anchors_jsonb);
+  const dimensions: Dimension[] = ['usage', 'efficiency', 'effectiveness', 'proficiency'];
+  const weights = Object.fromEntries(dimensions.map((dimension) => {
+    const configured = numOrNull(rawWeights[dimension]);
+    return [dimension, configured !== null && configured >= 0 ? configured : DEFAULT_INDEX_CONFIG.weights[dimension]];
+  })) as Record<Dimension, number>;
+  const anchors = Object.fromEntries((Object.keys(KPI_DIMENSION) as KpiId[]).map((kpiId) => {
+    const configured = object(rawAnchors[kpiId]);
+    const fallback = DEFAULT_INDEX_CONFIG.anchors[kpiId];
+    return [kpiId, {
+      target: numOrNull(configured.target) ?? fallback.target,
+      ...(fallback.floor !== undefined || configured.floor !== undefined ? { floor: numOrNull(configured.floor) ?? fallback.floor } : {}),
+      ...(fallback.ceil !== undefined || configured.ceil !== undefined ? { ceil: numOrNull(configured.ceil) ?? fallback.ceil } : {}),
+    }];
+  })) as Record<KpiId, KpiAnchor>;
+  return { configVersion: `v${scoredVersion}`, weights, anchors };
+}
+
+function object(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+}
 
 /** Anchor floor/target for a KPI from the canonical defaults (used for the gap ranking). */
-function anchorFor(kpiId: KpiId): { floor: number; target: number } {
-  const a = DEFAULT_INDEX_CONFIG.anchors[kpiId];
+function anchorFor(kpiId: KpiId, config: NarrativeConfig): { floor: number; target: number } {
+  const a = config.anchors[kpiId];
   if (!a) return { floor: 0, target: 100 };
   // Inverted KPIs store target/ceil; use target as the "good" point either way, and the
   // opposite endpoint as the "floor" reference for the gap.
@@ -137,10 +194,14 @@ interface KpiDailyLite {
   raw_value: number | null;
   norm_score: number | null;
   signal_count: number;
+  provenance: 'employee' | 'organization_aggregate';
+  sample_size?: number;
+  population_size?: number;
 }
 
 /** The latest-date kpi_daily rows for the scope (matched to the latest index_daily date). */
 async function loadKpiRows(scope: string, scopeId: string, date: string): Promise<KpiDailyLite[]> {
+  if (scope === 'function') return loadOrganizationKpiRows(scopeId, date);
   const db = looseDb();
   const raw = rows(
     await db
@@ -155,7 +216,50 @@ async function loadKpiRows(scope: string, scopeId: string, date: string): Promis
     raw_value: numOrNull(r.raw_value),
     norm_score: numOrNull(r.norm_score),
     signal_count: num(r.signal_count),
+    provenance: 'employee',
   }));
+}
+
+/**
+ * The scoring pipeline intentionally does not manufacture function-scope KPI rows.
+ * Organization narration therefore consumes a privacy-safe aggregation of the latest
+ * real employee KPI rows: median score/raw value, summed signals, and explicit coverage.
+ * No employee id or employee narrative enters the organization prompt.
+ */
+async function loadOrganizationKpiRows(functionId: string, date: string): Promise<KpiDailyLite[]> {
+  const db = looseDb();
+  const [employeeResult, kpiResult] = await Promise.all([
+    db.from('employees').select('id, active, function_id').eq('function_id', functionId).eq('active', true),
+    db.from('kpi_daily').select('kpi_id, raw_value, norm_score, signal_count, scope, scope_id, function_id, date')
+      .eq('function_id', functionId).eq('scope', 'employee').eq('date', date),
+  ]);
+  const employees = rows(employeeResult);
+  const populationSize = employees.length;
+  const activeIds = new Set(employees.map((employee) => String(employee.id)));
+  const grouped = new Map<string, Record<string, unknown>[]>();
+  for (const row of rows(kpiResult)) {
+    if (!activeIds.has(String(row.scope_id)) || numOrNull(row.norm_score) === null || num(row.signal_count) <= 0) continue;
+    const id = String(row.kpi_id);
+    grouped.set(id, [...(grouped.get(id) ?? []), row]);
+  }
+  return Array.from(grouped.entries()).map(([kpiId, group]) => ({
+    kpi_id: kpiId,
+    raw_value: median(group.map((row) => numOrNull(row.raw_value)).filter((value): value is number => value !== null)),
+    norm_score: median(group.map((row) => numOrNull(row.norm_score)).filter((value): value is number => value !== null)),
+    signal_count: group.reduce((sum, row) => sum + num(row.signal_count), 0),
+    provenance: 'organization_aggregate',
+    sample_size: new Set(group.map((row) => String(row.scope_id))).size,
+    population_size: populationSize,
+  }));
+}
+
+function median(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? ((sorted[middle - 1] ?? 0) + (sorted[middle] ?? 0)) / 2
+    : sorted[middle] ?? null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -182,13 +286,13 @@ function confScore(band: ConfidenceBand): number {
 }
 
 /** Build value-vs-anchor rows from the latest kpi_daily rows (with real signal only). */
-function buildValuesVsAnchor(kpis: KpiDailyLite[]): ValueVsAnchor[] {
+function buildValuesVsAnchor(kpis: KpiDailyLite[], config: NarrativeConfig): ValueVsAnchor[] {
   return kpis
     .filter((k) => k.kpi_id in KPI_DIMENSION)
     .map((k) => {
       const kpiId = k.kpi_id as KpiId;
       const dimension = KPI_DIMENSION[kpiId];
-      const { floor, target } = anchorFor(kpiId);
+      const { floor, target } = anchorFor(kpiId, config);
       return {
         kpiId,
         dimension,
@@ -196,8 +300,11 @@ function buildValuesVsAnchor(kpis: KpiDailyLite[]): ValueVsAnchor[] {
         norm: k.norm_score,
         floor,
         target,
-        weight: DIMENSION_WEIGHT[dimension],
+        weight: config.weights[dimension],
         metMinSignal: k.signal_count > 0,
+        provenance: k.provenance,
+        sampleSize: k.sample_size,
+        populationSize: k.population_size,
       };
     });
 }
@@ -210,21 +317,22 @@ function buildValuesVsAnchor(kpis: KpiDailyLite[]): ValueVsAnchor[] {
  */
 export function rankImprovements(
   values: ValueVsAnchor[],
+  limit = 5,
 ): Array<{ area: ValueVsAnchor; estImpact: number }> {
   return values
     .filter((v) => v.norm !== null && v.norm < 100 && v.metMinSignal)
     .map((v) => ({ area: v, estImpact: round1((100 - (v.norm as number)) * v.weight) }))
     .filter((x) => x.estImpact > 0)
     .sort((a, b) => b.estImpact - a.estImpact)
-    .slice(0, 5);
+    .slice(0, limit);
 }
 
 /** Strengths: KPIs at/above target-equivalent (norm >= 80) with signal, strongest first. */
-export function rankStrengths(values: ValueVsAnchor[]): ValueVsAnchor[] {
+export function rankStrengths(values: ValueVsAnchor[], limit = 4): ValueVsAnchor[] {
   return values
     .filter((v) => v.norm !== null && v.norm >= 80 && v.metMinSignal)
     .sort((a, b) => (b.norm as number) - (a.norm as number))
-    .slice(0, 4);
+    .slice(0, limit);
 }
 
 /**
@@ -288,15 +396,21 @@ function isoMinus(iso: string, days: number): string {
  */
 export function buildEvidence(values: ValueVsAnchor[], deltas: DeltaRow[]): EvidenceRow[] {
   const ev: EvidenceRow[] = [];
+  const aggregateScope = values.some((value) => value.provenance === 'organization_aggregate');
   for (const v of values) {
     if (v.norm === null) continue;
+    const prefix = v.provenance === 'organization_aggregate' ? 'org-kpi' : 'kpi';
     ev.push({
-      id: `kpi:${v.kpiId}:${v.dimension}`,
-      label: `${v.kpiId} normalized (${v.dimension})`,
+      id: `${prefix}:${v.kpiId}:${v.dimension}`,
+      label: `${v.kpiId} ${v.provenance === 'organization_aggregate' ? 'organization median' : 'normalized'} (${v.dimension})`,
       value: v.norm,
+      source: v.provenance ?? 'employee',
     });
     if (v.raw !== null) {
-      ev.push({ id: `kpiraw:${v.kpiId}:${v.dimension}`, label: `${v.kpiId} raw value`, value: v.raw });
+      ev.push({ id: `${prefix}-raw:${v.kpiId}:${v.dimension}`, label: `${v.kpiId} raw ${v.provenance === 'organization_aggregate' ? 'median' : 'value'}`, value: v.raw, source: v.provenance ?? 'employee' });
+    }
+    if (v.provenance === 'organization_aggregate' && v.sampleSize !== undefined && v.populationSize !== undefined) {
+      ev.push({ id: `org-coverage:${v.kpiId}`, label: `${v.kpiId} contributing people`, value: `${v.sampleSize} of ${v.populationSize}`, source: 'organization_aggregate' });
     }
   }
   for (const d of deltas) {
@@ -306,6 +420,7 @@ export function buildEvidence(values: ValueVsAnchor[], deltas: DeltaRow[]): Evid
       id: `delta:${key}`,
       label: `${key} change vs baseline`,
       value: d.delta,
+      source: aggregateScope ? 'organization_aggregate' : 'employee',
     });
   }
   return ev;
@@ -438,7 +553,7 @@ export async function assembleScope(
   scope: 'function' | 'employee',
   scopeId: string,
   date: string,
-  configVersion: string,
+  config: NarrativeConfig,
 ): Promise<AssembledScope> {
   const indexRows = await loadIndexRows(scope, scopeId);
   const latest = indexRows[0] ?? null;
@@ -451,11 +566,11 @@ export async function assembleScope(
   };
 
   const kpis = latest ? await loadKpiRows(scope, scopeId, latest.date) : [];
-  const values = buildValuesVsAnchor(kpis);
+  const values = buildValuesVsAnchor(kpis, config);
   const deltas = computeDeltas(indexRows, 7);
   const evidence = buildEvidence(values, deltas);
-  const rankedImprovements = rankImprovements(values);
-  const strengths = rankStrengths(values);
+  const rankedImprovements = rankImprovements(values, scope === 'function' ? 3 : 5);
+  const strengths = rankStrengths(values, scope === 'function' ? 3 : 4);
 
   const confidenceBand = confBandOf(latest?.confidence ?? null);
 
@@ -463,7 +578,7 @@ export async function assembleScope(
     scope,
     scopeId,
     date: dayOnly(date),
-    configVersion,
+    configVersion: config.configVersion,
     l1: latest?.l1 ?? null,
     l2,
     band: bandOf(latest?.band ?? null),

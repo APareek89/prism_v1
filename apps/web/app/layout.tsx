@@ -2,13 +2,12 @@
 //
 // Root layout. Loads the three Google fonts via next/font and binds them to CSS
 // variables so the --disp / --body / --mono families in globals.css resolve. Imports
-// the design tokens and renders the AppShell (Sidebar + main) around every route.
+// the design tokens and renders the AppShell (top navigation + main) around every route.
 
 import type { Metadata, Viewport } from 'next';
 import { Space_Grotesk, IBM_Plex_Sans, JetBrains_Mono } from 'next/font/google';
 import { AppShell } from '@/components/layout/AppShell';
 import { getAuthUser } from '@/lib/auth/session';
-import { createAdminClient } from '@/lib/supabase/admin';
 import './globals.css';
 
 // Font CSS variables. globals.css :root sets --disp/--body/--mono to the family
@@ -46,11 +45,6 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const user = await getAuthUser();
-  let workspaceName: string | null = null;
-  if (user) {
-    const { data } = await createAdminClient().from('functions').select('name').eq('id', user.functionId).maybeSingle();
-    workspaceName = (data as { name?: string } | null)?.name ?? null;
-  }
   return (
     <html
       lang="en"
@@ -73,7 +67,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         `}</style>
       </head>
       <body>
-        <AppShell roles={user?.roles ?? []} workspaceName={workspaceName}>{children}</AppShell>
+        <AppShell roles={user?.roles ?? []}>{children}</AppShell>
       </body>
     </html>
   );

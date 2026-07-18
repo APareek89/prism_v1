@@ -15,12 +15,14 @@ export interface InsightListProps {
   limit?: number;
   /** Hint shown when there's nothing to improve yet. */
   emptyHint?: string;
+  detailed?: boolean;
 }
 
 export function InsightList({
   items,
   limit,
   emptyHint = 'improvements appear once the first scored window lands',
+  detailed = false,
 }: InsightListProps) {
   if (items.length === 0) {
     return <EmptyState compact title="Awaiting signal" hint={emptyHint} />;
@@ -36,6 +38,19 @@ export function InsightList({
           <div className="tx">
             <b>{it.title}</b>
             <small>{it.body}</small>
+            {it.detail ? <details className="insight-depth" open={detailed}>
+              <summary>{detailed ? 'Evidence-bound reasoning' : 'Inspect reasoning'}</summary>
+              <dl>
+                <div><dt>Observation</dt><dd>{it.detail.observation}</dd></div>
+                <div><dt>Interpretation</dt><dd>{it.detail.interpretation}</dd></div>
+                <div><dt>Alternative explanation</dt><dd>{it.detail.alternativeExplanation}</dd></div>
+                <div><dt>Controllable action</dt><dd>{it.detail.action}</dd></div>
+                <div><dt>Expected signal</dt><dd>{it.detail.expectedSignal}</dd></div>
+                <div><dt>Verification</dt><dd>{it.detail.verificationPlan}</dd></div>
+                <div><dt>Do-no-harm guard</dt><dd>{it.detail.doNoHarm}</dd></div>
+                {it.detail.confidenceReason ? <div><dt>Confidence</dt><dd>{it.detail.confidenceReason}</dd></div> : null}
+              </dl>
+            </details> : null}
           </div>
           <span className={`tag2 ${it.tag}`}>{it.impactLabel}</span>
         </div>

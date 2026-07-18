@@ -1,6 +1,6 @@
 %% Prism product decision flow
-%% verified: 2026-07-18 configuration + role-aware action workflow
-%% files: apps/web/lib/nav/routes.ts, apps/web/app/(views)/configure/page.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/my-actions/page.tsx, apps/web/app/(views)/org-actions/page.tsx
+%% verified: 2026-07-18 top navigation + evidence-bound insight workflow
+%% files: apps/web/components/layout/TopNav.tsx, apps/web/lib/nav/routes.ts, apps/web/app/(views)/configure/page.tsx, apps/web/app/(views)/function/page.tsx, apps/web/app/(views)/me/page.tsx, apps/web/app/(views)/my-actions/page.tsx, apps/web/app/(views)/org-actions/page.tsx
 %% granularity: master
 flowchart LR
   A["GitHub App<br/>FUNCTION · organization evidence"] --> B["Personal Codex or Claude consent<br/>FUNCTION · per employee"]
@@ -17,12 +17,16 @@ flowchart LR
   H -->|"Every member"| K["My View<br/>TERM · connection + performance"]
   H -->|"Every member"| L["My Actions<br/>TERM · recs + official learning"]
   G --> M["Admin calculation trace<br/>TERM · evidence → KPI → L2 → L1"]
+  G --> Q["Evidence-bound narration<br/>AGENT + FUNCTION · see diagram 05"]
+  Q --> D
+  Q --> F
   L --> N[("Human action event<br/>DATA · intent, not impact")]
   J --> O[("Organization action<br/>DATA · owner + status + evidence")]
   N --> P["Later evidence verification<br/>FUNCTION · adoption monitor"]
   O --> P
   P --> C
   class A,B,D,E,F,G,P fn;
+  class Q agent;
   class C,N,O data;
   class H dec;
   class I,J,K,L,M term;
@@ -30,3 +34,5 @@ flowchart LR
   classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;
   classDef term fill:#e5e7eb,stroke:#6b7280,color:#111827;
   classDef data fill:#ede9fe,stroke:#7c3aed,color:#2a0a4a;
+  classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
+  classDef ask fill:#cffafe,stroke:#0891b2,color:#083344;

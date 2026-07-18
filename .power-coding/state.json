@@ -1,6 +1,6 @@
 {
   "_comment": "Power Coding runtime state. Safe to commit; later sessions use these shas to determine the live change-set.",
-  "last_sentinel_commit": "f28022a18b65",
-  "last_fmea_commit": null,
+  "last_sentinel_commit": "a05a319",
+  "last_fmea_commit": "a05a319",
   "declined_changesets": []
 }

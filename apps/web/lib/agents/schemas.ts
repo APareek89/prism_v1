@@ -21,21 +21,26 @@ const evidenceRefs = z
       'statement. Only cite ids that appear in that list. Do not invent ids.',
   );
 
+const analysisFields = {
+  observation: z.string().describe('A factual observation supported by the cited evidence. No causal claim.'),
+  interpretation: z.string().describe('Why the observation matters, clearly framed as interpretation rather than proof.'),
+  alternativeExplanation: z.string().describe('One plausible alternative explanation or confounder a skeptic should consider.'),
+  action: z.string().describe('One controllable, concrete action appropriate to the scope.'),
+  expectedSignal: z.string().describe('The leading metric or behavior that should change if the action is useful.'),
+  verificationPlan: z.string().describe('How the next measured window will verify or falsify the interpretation.'),
+  doNoHarm: z.string().describe('A guardrail that prevents gaming or damaging delivery quality.'),
+};
+
 // ---------------------------------------------------------------------------
 // improvement-area — one "Top-to-improve" narrative (rank + est_impact in code)
 // ---------------------------------------------------------------------------
 
 export const ImprovementItemSchema = z.object({
+  candidateId: z.string().describe('The exact KPI id supplied for this candidate. Do not alter it.'),
   title: z
     .string()
     .describe('A short imperative headline for the improvement (no numbers). ≤ 70 chars.'),
-  body: z
-    .string()
-    .describe(
-      'One or two grounded sentences explaining what to do and why, citing only the ' +
-        'metrics present in the provided inputs. Do not state any number that is not in ' +
-        'the inputs.',
-    ),
+  ...analysisFields,
   evidenceRefs,
 });
 export type ImprovementItem = z.infer<typeof ImprovementItemSchema>;
@@ -52,10 +57,9 @@ export type ImprovementAreaOutput = z.infer<typeof ImprovementAreaSchema>;
 // ---------------------------------------------------------------------------
 
 export const DriverItemSchema = z.object({
+  candidateId: z.string().describe('The exact movement key supplied for this candidate. Do not alter it.'),
   title: z.string().describe('A short headline naming what changed (no numbers). ≤ 70 chars.'),
-  body: z
-    .string()
-    .describe('One grounded sentence on why it moved, citing only provided metrics.'),
+  ...analysisFields,
   evidenceRefs,
 });
 export type DriverItem = z.infer<typeof DriverItemSchema>;
@@ -72,10 +76,9 @@ export type ChangeGovernanceOutput = z.infer<typeof ChangeGovernanceSchema>;
 // ---------------------------------------------------------------------------
 
 export const AttributionItemSchema = z.object({
+  candidateId: z.string().describe('The exact KPI id supplied for this candidate. Do not alter it.'),
   title: z.string().describe('A short headline for the strength (no numbers). ≤ 70 chars.'),
-  body: z
-    .string()
-    .describe('One grounded sentence attributing the win to a cause, citing provided metrics.'),
+  ...analysisFields,
   evidenceRefs,
 });
 export type AttributionItem = z.infer<typeof AttributionItemSchema>;
@@ -105,3 +108,11 @@ export const PrLevelNarrativeSchema = z.object({
   evidenceRefs,
 });
 export type PrLevelNarrative = z.infer<typeof PrLevelNarrativeSchema>;
+
+export const PrLevelBatchItemSchema = PrLevelNarrativeSchema.extend({
+  prId: z.string().describe('The exact PR id supplied in the input. Do not alter it.'),
+});
+export const PrLevelBatchNarrativeSchema = z.object({
+  items: z.array(PrLevelBatchItemSchema).describe('Exactly one narrative for each supplied PR id.'),
+});
+export type PrLevelBatchNarrative = z.infer<typeof PrLevelBatchNarrativeSchema>;

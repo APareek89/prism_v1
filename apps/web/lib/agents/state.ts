@@ -48,6 +48,12 @@ export interface ValueVsAnchor {
   weight: number;
   /** whether this KPI's dimension met its min-signal threshold. */
   metMinSignal: boolean;
+  /** Direct employee fact or privacy-safe aggregate across active employees. */
+  provenance?: 'employee' | 'organization_aggregate';
+  /** Number of people contributing real KPI evidence (aggregate scopes only). */
+  sampleSize?: number;
+  /** Active population used as the coverage denominator (aggregate scopes only). */
+  populationSize?: number;
 }
 
 /**

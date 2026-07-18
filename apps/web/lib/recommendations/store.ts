@@ -22,6 +22,7 @@ import type {
   RuleOutput,
   SessionFact,
 } from './types';
+import { recommendationTrace } from './contract';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Loose admin query surface (generated Database type is a placeholder). Same cast
@@ -49,7 +50,13 @@ function looseDb(): LooseDb {
 }
 
 function rows(result: { data: unknown; error: unknown }): Record<string, unknown>[] {
-  if (result.error || !Array.isArray(result.data)) return [];
+  if (result.error) {
+    const message = typeof result.error === 'object' && result.error && 'message' in result.error
+      ? String((result.error as { message?: unknown }).message ?? 'database query failed')
+      : String(result.error);
+    throw new Error(message);
+  }
+  if (!Array.isArray(result.data)) return [];
   return result.data as Record<string, unknown>[];
 }
 function num(v: unknown): number {
@@ -300,6 +307,7 @@ export async function insertRec(
       unit: out.evidence.unit,
       signals: out.evidence.signals,
       dimension: out.dimension,
+      ...recommendationTrace(out),
     },
   });
   return { ok: !res.error, error: res.error?.message ?? null };

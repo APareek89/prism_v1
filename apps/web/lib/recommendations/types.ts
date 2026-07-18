@@ -48,6 +48,8 @@ export interface RuleOutput {
   dimension: Dimension;
   /** before/after/delta — all computed in code. */
   evidence: RecEvidence;
+  /** Deterministic selection metadata attached by the engine after all rules fire. */
+  selection?: { rank: number; candidateCount: number; activeLimit: number };
 }
 
 /** One persisted KPI norm for an employee (from kpi_daily, written by the scoring engine).

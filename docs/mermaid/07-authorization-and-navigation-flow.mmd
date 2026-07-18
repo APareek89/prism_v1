@@ -1,0 +1,23 @@
+%% Prism authorization and navigation flow
+%% verified: 2026-07-18 top navigation + contextual section navigation
+%% files: apps/web/app/layout.tsx, apps/web/components/layout/AppShell.tsx, apps/web/components/layout/TopNav.tsx, apps/web/components/layout/SectionNav.tsx, apps/web/lib/nav/routes.ts, apps/web/lib/auth/session.ts, apps/web/lib/auth/roles.ts
+%% granularity: master
+flowchart LR
+  A["Supabase session<br/>FUNCTION · resolve exact employee claim"] --> B["Server auth context<br/>FUNCTION · employee, function, roles"]
+  B --> C["Visible top navigation<br/>FUNCTION · filter main routes by role"]
+  C --> D{"Route capability<br/>DECISION · server guard and scope"}
+  D -->|"denied"| X["Access boundary<br/>TERM · no protected data read"]
+  D -->|"allowed"| E["Main route<br/>TERM · authorized organization or personal view"]
+  E --> F{"Route has sub-sections?<br/>DECISION · My View, My Actions, Configuration, Admin"}
+  F -->|"no"| G["Direct content<br/>TERM · single route surface"]
+  F -->|"yes"| H["Contextual section rail<br/>FUNCTION · local sub-section state or query"]
+  H --> I["Scoped sub-section<br/>TERM · only data needed by selected section"]
+  class A,B,C,H fn;
+  class D,F dec;
+  class X,E,G,I term;
+  classDef agent fill:#dbeafe,stroke:#2563eb,color:#0b2a5b;
+  classDef fn fill:#dcfce7,stroke:#16a34a,color:#052e16;
+  classDef dec fill:#f3e8ff,stroke:#9333ea,color:#2a0a4a;
+  classDef term fill:#e5e7eb,stroke:#6b7280,color:#111827;
+  classDef ask fill:#cffafe,stroke:#0891b2,color:#083344;
+  classDef data fill:#ede9fe,stroke:#7c3aed,color:#2a0a4a;
